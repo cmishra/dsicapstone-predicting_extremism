@@ -1,4 +1,4 @@
-setwd("Capstone/github/chetan mishra sandbox/")
+setwd("Capstone/github/chetan mishra sandbox/webscraping westboro/")
 source("webscraping westboro_methods.R")
 
 # get html on page with sermon links
@@ -33,10 +33,13 @@ save(text_cache, file="text_cache.RData")
 # output code
 text <- rep("", length.out=length(text_cache))
 for (i in seq_along(text_cache)) {
-   text[i] <- paste(text_cache[[i]], collapse="")
+   text[i] <- paste(text_cache[[i]], collapse=" ")
 }
 text <- data.table(data.frame(content=text, doc=paste0("WestboroBaptist_", sermon_pdfs)))
+text[,"content":=as.character(content)]
 text <- text[str_length(content) > 20]
-write.table(text, file="Westboro Sermons.tsv", row.names=F,
-            sep="\t")
+for (i in 1:nrow(text)) {
+  write(x=text[i,content], file=paste0("sermons/", 
+                                      text[i, doc], ".txt"))
+}
 
