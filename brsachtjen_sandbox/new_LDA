@@ -1,0 +1,80 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Oct 15 20:16:01 2015
+
+@author: brian
+"""
+
+
+
+from nltk.corpus import stopwords
+from nltk.stem import *
+cachedStopWords = stopwords.words("english")
+stemmer = SnowballStemmer("english", ignore_stopwords=True)
+import os, fnmatch
+import re
+import collections
+from nltk import tokenize
+import re
+import sys
+from numpy import *
+import pandas as pd
+import nltk
+
+from gensim import corpora, models, similarities
+from gensim.models import hdpmodel, ldamodel
+
+
+def findFiles (path, filter):
+    for root, dirs, files in os.walk(path):
+        for file in fnmatch.filter(files, filter):
+            yield os.path.join(root, file)
+
+alldocs = []
+
+for textFile in findFiles(r'C:\Users\brian\Documents\UVA\Capstone\Westboro', '*.txt'):
+    words = re.findall('\w+', open(textFile).read().lower())
+    words = [stemmer.stem(word) for word in words]
+    words = [word for word in words if word not in cachedStopWords]
+    words = [word for word in words if word[0].isdigit() == False]
+    alldocs.append(words)
+
+
+
+texts = [[word for word in document]
+         for document in alldocs]
+    
+
+       
+dictionary = corpora.Dictionary(texts)
+corpus = [dictionary.doc2bow(text) for text in texts]
+
+# train model
+lda = ldamodel.LdaModel(corpus, id2word=dictionary, num_topics=20) 
+
+
+#get top words for each topic
+for i in range(0,20):
+    print("Topic: ", i+1)
+    thelist = []
+    for j in range(0,10):
+        thelist.append(lda.show_topic(i)[j][1])
+    print(thelist)
+    
+       
+
+
+#get most probable topic for each article
+for i in range(0,20):
+    x = lda.get_document_topics(corpus)
+    y = sorted(x[i],key=lambda w: w[1], reverse = True)
+    print("Document: ", i+1)
+    print("Topic: ", y[0][0])
+    thelist = []
+    for j in range(0,10):
+        thelist.append(lda.show_topic(y[0][0])[j][1])
+    print(thelist)
+    
+
+
+
