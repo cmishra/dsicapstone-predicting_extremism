@@ -1,0 +1,298 @@
+library(tm)
+library(topicmodels)
+library(lda)
+library(rJava)
+library("NLP")
+library("openNLP")
+## Extract text
+
+
+
+## Set sentence and word token annotations.
+sent_token_annotator <- Maxent_Sent_Token_Annotator()
+word_token_annotator <- Maxent_Word_Token_Annotator()
+#pos_tag_annotator <-   pos_tag_annotator <- Maxent_POS_Tag_Annotator(probs = TRUE) #turned off for this exercise
+pos_tag_annotator <- Maxent_POS_Tag_Annotator()
+
+
+#Set Function to get POS tags for documents
+
+get.pos.tag<-function(file.name){
+  
+  #get text
+  s<- paste(readLines(file.name), collapse=" ")
+  s<-as.String(s)
+  #Annotate words
+  a <- annotate(s, list(sent_token_annotator, word_token_annotator))
+  
+  # Create dataframe with POS tag probabilities off.
+  a2 <- annotate(s, list(sent_token_annotator, word_token_annotator))
+  a3 <- annotate(s, pos_tag_annotator, a2)
+  a3w <- subset(a3, type == "word")
+  
+  df.posTags<- data.frame(a3w)
+  
+  tags <- sapply(a3w$features, `[[`, "POS")
+  
+  
+  #Add document name to data frame
+  df.posTags$file.name<-file.name
+  
+  #word
+  df.posTags$Word<-s[a3w]
+  
+  #tag
+  df.posTags$Tag<-tags
+  
+  #subset data
+  df.posTags<-df.posTags[,c('file.name','Word','Tag')]
+  
+  return(df.posTags)
+}
+
+
+setwd('C:/Users/brian/Documents/UVA/Capstone')
+newstopwords <- scan(file = "stopWords_Religous.txt", what = "")
+
+
+
+
+#########################
+# Westboro noun LDA
+#########################
+
+# get docs
+setwd('C:/Users/brian/Documents/UVA/Capstone/Westboro')
+z <- NULL
+remove(z)
+
+file.list <- list.files(pattern = "\\.txt")
+for (i in file.list){
+  y<-get.pos.tag(i)
+  ifelse(!exists("z"),z<-y,z<-rbind(z,y))
+}
+
+# clean up docs
+westboro.noun <- z
+westboro.noun$Word <- removePunctuation(westboro.noun$Word) 
+westboro.noun$Word <- removeNumbers(westboro.noun$Word)
+westboro.noun$Word <- tolower(westboro.noun$Word)
+westboro.noun$Word <- removeWords(westboro.noun$Word, newstopwords)
+westboro.noun <- subset(westboro.noun, westboro.noun$Word != "")
+westboro.noun <- subset(westboro.noun, westboro.noun$Tag == "NN" |  westboro.noun$Tag == "NNP" |  westboro.noun$Tag == "NNS" |  westboro.noun$Tag == "NNPS")
+
+
+x = table(westboro.noun$file.name, westboro.noun$Word)
+westboro.data <- NULL
+
+for(i in 1:(length(row.names(x))))
+{
+  sermonname <- row.names(x)[i]
+  westboro.data <- c(westboro.data,paste0(subset(westboro.noun, file.name == sermonname)[,2], collapse = " "))
+  }
+
+#westboro.noun <- westboro.noun$Word
+westboro.frame <- as.data.frame(westboro.data)
+
+# create LDA
+corpus.noun <- VCorpus(DataframeSource(westboro.frame))
+dtm.noun <- DocumentTermMatrix(corpus.noun)
+noun.row.sums = apply(dtm.noun, 1, sum)
+dtm.noun = dtm.noun[noun.row.sums > 0,]
+westboro.lda.noun <- LDA(dtm.noun, k = 10)
+
+
+# get top 10 terms for each topic
+westboro.topnouns <- terms(westboro.lda.noun, 20)[1:20,]
+
+
+# get most likely topic for each doc
+westboro.lda.noun.docs <- posterior(westboro.lda.noun, DocumentTermMatrix(VCorpus(DirSource(directory = 'C:/Users/brian/Documents/UVA/Capstone/Westboro'))))
+westboro.lda.noun.docs$topics[1:10,]
+
+
+
+#############################
+# Westboro adjective LDA
+#############################
+
+# clean up docs
+westboro.adj <- z
+westboro.adj$Word <- removePunctuation(westboro.adj$Word) 
+westboro.adj$Word <- removeNumbers(westboro.adj$Word)
+westboro.adj$Word <- tolower(westboro.adj$Word)
+westboro.adj$Word <- removeWords(westboro.adj$Word, newstopwords)
+westboro.adj <- subset(westboro.adj, westboro.adj$Word != "")
+westboro.adj <- subset(westboro.adj, westboro.adj$Tag == "JJ" |  westboro.adj$Tag == "JJR" |  westboro.adj$Tag == "JJS")
+
+x = table(westboro.adj$file.name, westboro.adj$Word)
+westboro.data <- NULL
+
+for(i in 1:(length(row.names(x))))
+{
+  sermonname <- row.names(x)[i]
+  westboro.data <- c(westboro.data,paste0(subset(westboro.adj, file.name == sermonname)[,2], collapse = " "))
+}
+
+#westboro.adj <- westboro.adj$Word
+westboro.frame <- as.data.frame(westboro.data)
+
+# create LDA
+corpus.adj <- VCorpus(DataframeSource(westboro.frame))
+dtm.adj <- DocumentTermMatrix(corpus.adj)
+adj.row.sums = apply(dtm.adj, 1, sum)
+dtm.adj = dtm.adj[adj.row.sums > 0,]
+westboro.lda.adj <- LDA(dtm.adj, k = 10)
+
+
+# get top 10 terms for each topic
+westboro.topadj <- terms(westboro.lda.adj, 20)[1:20,]
+
+
+# get most likely topic for each doc
+westboro.lda.adj.docs <- posterior(westboro.lda.adj, DocumentTermMatrix(VCorpus(DirSource(directory = 'C:/Users/brian/Documents/UVA/Capstone/Westboro'))))
+westboro.lda.adj.docs$topics[1:10,]
+
+
+# create final dataframe
+westboro.final <-  westboro.lda.adj.docs$topics
+
+bestnoun <- NULL
+bestadj <- NULL
+
+for (i in 1:nrow(westboro.lda.adj.docs$topics))
+{
+  bestnoun <- as.numeric(c(bestnoun,which.max(westboro.lda.noun.docs$topics[i,])))
+  bestadj <- as.numeric(c(bestadj,which.max(westboro.lda.adj.docs$topics[i,])))
+}
+
+westboro.final <- cbind(westboro.final, bestnoun, bestadj)
+westboro.final <- westboro.final[,11:12]
+
+
+
+
+#########################
+# Piper noun LDA
+#########################
+
+setwd('C:/Users/brian/Documents/UVA/Capstone/Piper/Sermons')
+z1 <- NULL
+remove(z1)
+file.list2 <- list.files(pattern = "\\.txt")
+for (i in file.list2){
+  y<-get.pos.tag(i)
+  ifelse(!exists("z1"),z1<-y,z1<-rbind(z1,y))
+}
+
+
+# clean up docs
+piper.noun <- z1
+piper.noun$Word <- removePunctuation(piper.noun$Word) 
+piper.noun$Word <- removeNumbers(piper.noun$Word)
+piper.noun$Word <- tolower(piper.noun$Word)
+piper.noun$Word <- removeWords(piper.noun$Word, newstopwords)
+piper.noun <- subset(piper.noun, piper.noun$Word != "")
+piper.noun <- subset(piper.noun, piper.noun$Tag == "NN" |  piper.noun$Tag == "NNP" |  piper.noun$Tag == "NNS" |  piper.noun$Tag == "NNPS")
+
+
+x = table(piper.noun$file.name, piper.noun$Word)
+piper.data <- NULL
+
+for(i in 1:(length(row.names(x))))
+{
+  sermonname <- row.names(x)[i]
+  piper.data <- c(piper.data,paste0(subset(piper.noun, file.name == sermonname)[,2], collapse = " "))
+}
+
+#piper.noun <- piper.noun$Word
+piper.frame <- as.data.frame(piper.data)
+
+# create LDA
+corpus.noun <- VCorpus(DataframeSource(piper.frame))
+dtm.noun <- DocumentTermMatrix(corpus.noun)
+noun.row.sums = apply(dtm.noun, 1, sum)
+dtm.noun = dtm.noun[noun.row.sums > 0,]
+piper.lda.noun <- LDA(dtm.noun, k = 10)
+
+
+# get top 10 terms for each topic
+piper.topnouns <- terms(piper.lda.noun, 20)[1:20,]
+
+
+# get most likely topic for each doc
+piper.lda.noun.docs <- posterior(piper.lda.noun, DocumentTermMatrix(VCorpus(DirSource(directory = 'C:/Users/brian/Documents/UVA/Capstone/piper/sermons'))))
+piper.lda.noun.docs$topics[1:10,]
+
+
+
+#############################
+# piper adjective LDA
+#############################
+
+# clean up docs
+piper.adj <- z1
+piper.adj$Word <- removePunctuation(piper.adj$Word) 
+piper.adj$Word <- removeNumbers(piper.adj$Word)
+piper.adj$Word <- tolower(piper.adj$Word)
+piper.adj$Word <- removeWords(piper.adj$Word, newstopwords)
+piper.adj <- subset(piper.adj, piper.adj$Word != "")
+piper.adj <- subset(piper.adj, piper.adj$Tag == "JJ" |  piper.adj$Tag == "JJR" |  piper.adj$Tag == "JJS")
+
+x = table(piper.adj$file.name, piper.adj$Word)
+piper.data <- NULL
+
+for(i in 1:(length(row.names(x))))
+{
+  sermonname <- row.names(x)[i]
+  piper.data <- c(piper.data,paste0(subset(piper.adj, file.name == sermonname)[,2], collapse = " "))
+}
+
+#piper.adj <- piper.adj$Word
+piper.frame <- as.data.frame(piper.data)
+
+# create LDA
+corpus.adj <- VCorpus(DataframeSource(piper.frame))
+dtm.adj <- DocumentTermMatrix(corpus.adj)
+adj.row.sums = apply(dtm.adj, 1, sum)
+dtm.adj = dtm.adj[adj.row.sums > 0,]
+piper.lda.adj <- LDA(dtm.adj, k = 10)
+
+
+# get top 10 terms for each topic
+piper.topadj <- terms(piper.lda.adj, 20)[1:20,]
+
+
+# get most likely topic for each doc
+piper.lda.adj.docs <- posterior(piper.lda.adj, DocumentTermMatrix(VCorpus(DirSource(directory = 'C:/Users/brian/Documents/UVA/Capstone/piper/sermons'))))
+piper.lda.adj.docs$topics[1:10,]
+
+
+# create final dataframe
+piper.final <-  piper.lda.adj.docs$topics
+
+bestnoun <- NULL
+bestadj <- NULL
+
+for (i in 1:nrow(piper.lda.adj.docs$topics))
+{
+  bestnoun <- as.numeric(c(bestnoun,which.max(piper.lda.noun.docs$topics[i,])))
+  bestadj <- as.numeric(c(bestadj,which.max(piper.lda.adj.docs$topics[i,])))
+}
+
+piper.final <- cbind(piper.final, bestnoun, bestadj)
+piper.final <- piper.final[,11:12]
+
+
+
+#############################
+# write all files to CSV
+#############################
+ 
+setwd('C:/Users/brian/Documents/UVA/Capstone/')
+write.csv(westboro.final,"westboro.final.csv")
+write.csv(westboro.topnouns,"westboro.topnouns.csv")
+write.csv(westboro.topadj,"westboro.topadj.csv")
+write.csv(piper.final,"piper.final.csv")
+write.csv(piper.topnouns,"piper.topnouns.csv")
+write.csv(piper.topadj,"piper.topadj.csv")
