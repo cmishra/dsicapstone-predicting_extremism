@@ -57,17 +57,12 @@ wordCoOccurences <- cmpfun(function(content, k, bySentence = F) {
       contextWords <- c(tail(content[setdiff(1:(i-1), endOfSentences)], k),
                         head(content[
                           setdiff((i+1):length(content), endOfSentences)], k))
-      }
-    as.data.table(data.frame(target=content[i], context=contextWords, freq=1))
+    }
+    data.frame(target=content[i], context=contextWords, freq=1)
+    # as.data.table(data.frame(target=content[i], context=contextWords, freq=1))
   }))
-  ret[,.(freq=sum(freq)), by=.(target, context)][!(target == "." | context == ".")]
+  # ret[,.(freq=sum(freq)), by=.(target, context)][!(target == "." | context == ".")]
 })
-
-profiling <- function() {
-  rbindlist(lapply(processedCorps[[1]][1:5], function(doc) 
-    wordCoOccurences(doc$content, 5)))
-}
-
 
 # tdmify <- function(corp, n){
 #   tokenizr <- function(x) NGramTokenizer(x, Weka_control(min = n, max = n))
@@ -82,3 +77,8 @@ profiling <- function() {
 #   )
 #   TermDocumentMatrix(corp, ctrl)
 # }
+
+
+
+
+
