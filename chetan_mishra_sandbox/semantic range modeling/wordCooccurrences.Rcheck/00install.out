@@ -1,0 +1,15 @@
+* installing *source* package ‘wordCooccurrences’ ...
+** libs
+g++ -I/usr/share/R/include -DNDEBUG   -I"/home/chetanmishra/R/x86_64-pc-linux-gnu-library/3.2/Rcpp/include"   -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c RcppExports.cpp -o RcppExports.o
+g++ -I/usr/share/R/include -DNDEBUG   -I"/home/chetanmishra/R/x86_64-pc-linux-gnu-library/3.2/Rcpp/include"   -fpic  -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c rcpp_hello_world.cpp -o rcpp_hello_world.o
+g++ -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o wordCooccurrences.so RcppExports.o rcpp_hello_world.o -L/usr/lib/R/lib -lR
+installing to /home/chetanmishra/Dropbox/College/4_Fourth Year/Capstone/chetan mishra sandbox/semantic range modeling/wordCooccurrences.Rcheck/wordCooccurrences/libs
+** R
+** preparing package for lazy loading
+** help
+Warning: /home/chetanmishra/Dropbox/College/4_Fourth Year/Capstone/chetan mishra sandbox/semantic range modeling/wordCooccurrences/man/wordCooccurrences-package.Rd:26: All text must be in a section
+Warning: /home/chetanmishra/Dropbox/College/4_Fourth Year/Capstone/chetan mishra sandbox/semantic range modeling/wordCooccurrences/man/wordCooccurrences-package.Rd:27: All text must be in a section
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded
+* DONE (wordCooccurrences)

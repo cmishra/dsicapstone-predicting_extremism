@@ -1,0 +1,3 @@
+useDynLib(wordCooccurrences)
+exportPattern("^[[:alpha:]]+")
+importFrom(Rcpp, evalCpp)

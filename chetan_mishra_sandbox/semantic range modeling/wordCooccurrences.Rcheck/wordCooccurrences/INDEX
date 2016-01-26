@@ -1,0 +1,3 @@
+rcpp_hello_world        Simple function using Rcpp
+wordCooccurrences-package
+                        What the package does (short line)
