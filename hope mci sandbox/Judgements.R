@@ -88,17 +88,29 @@ View(master)
 
 
 ### KEY! v0.3 Checking for all 3 parts
+toBe <- c("is","was","am","are","were","been","be","being")
 wordsAll <- list()
 partsAll <- list()
 adjAll <- list()
+toBeAll <- list()
+nounAll <- list()
+
 for (i in seq(nrow(POSs))) {
   x <- as.numeric(unlist(((POSs[i,"features"][[1]]))))
   y <- as.data.frame(pos.annotations[x])
   words <- c()
   parts <- c()
   adj_flag <- 0
+  toBe_flag <- 0
+  noun_flag <- 0
+  
   for (j in seq(1,nrow(y))) {
     word <- substr(doc1,y[j,"start"],y[j,"end"])
+    if (toBe_flag == 0) {
+      if (word %in% toBe) {
+        toBe_flag <- 1
+      }
+    }
     words <- append(words,word)
     
     part <- unlist(y[j,"features"])
@@ -111,17 +123,38 @@ for (i in seq(nrow(POSs))) {
       # print(adj_flag)
     }
     # print(adj_flag)
+    
+    # Check for Noun
+    if (noun_flag == 0) {
+      # print(adj_flag)
+      if (part == 'NN') {
+        noun_flag <- 1
+        # print(adj_flag)
+      }
+      # print(adj_flag)
+    }
+    # print(adj_flag)
     parts <- append(parts, part)
     # print(paste("added ",substr(doc1,y[i,"start"],y[i,"end"])))
   }
   wordsAll[[i]] <- list(words)
   partsAll[[i]] <- list(parts)
   adjAll[[i]] <- adj_flag
+  toBeAll[[i]] <- toBe_flag
+  nounAll[[i]] <- noun_flag
 }
 master$words <- wordsAll
 master$parts <- partsAll
 master$adj <- adjAll
+master$toBe <- toBeAll
+master$noun <- nounAll
 View(master)
+
+
+master$judgement <- ifelse(master$adj == 1 & master$toBe == 1 & master$noun == 1, 1, 0)
+View(master)
+
+
 
 # Gets all the info for the Words in the First Sentence
 d <- as.data.frame(pos.annotations[c])
