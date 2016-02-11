@@ -378,3 +378,47 @@ for k in range(65,len(links_list)):
         continue
 
 
+
+##########################################
+#
+# Rabbinic Sermons
+#
+##########################################
+
+headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 6.0; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0' }
+
+# now we want to get a URL for each of her sermons
+links_list = []
+#links_list.append('/resources/sermons/renewing_covenant')
+#links_list.append('/resources/sermons/what-comes-next')
+#links_list.append('/resources/sermons/sons-fathers')
+
+for i in range(55):
+    print(i)
+    url = "http://pasyn.org/resources/sermons?page=" + str(i+1)
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.text)
+    for j in range(len(soup.find_all("div", {"class" : "clear-block"})[0].find_all("div", {"class" : "views-field-view-node"}))):
+        links_list.append(soup.find_all("div", {"class" : "clear-block"})[0].find_all("div", {"class" : "views-field-view-node"})[j].find_all('a')[0]['href'])
+        
+
+
+
+
+
+for k in len(links_list)):
+    print(k)
+    url2 = "http://pasyn.org" + links_list[k]
+    response = requests.get(url2, headers=headers)
+    soup = BeautifulSoup(response.text)
+    text = soup.find_all("div", { "class" : "content clear-block" })[0].text
+    
+    filedirectory = 'C:/Users/brian/Documents/UVA/Capstone/Rabbinic/' + links_list[k].split("/")[len(links_list[k].split("/"))-1] + '.txt'
+    
+    file = open(filedirectory, 'w', newline='\n', encoding='utf8')
+    file.write(text)
+    file.close()
+    
+    
+    
+    
