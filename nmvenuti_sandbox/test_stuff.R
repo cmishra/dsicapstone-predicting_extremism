@@ -11,6 +11,5 @@ filepath="C:/Users/nmvenuti/Desktop/UVA MSDS/Capstone/webscraping westboro/"
 preprocessDocuments(filepath)
 
 #Check preprocessing worked
-load(paste(filepath,'Rdata/processedStrings.RData',sep="/"))
-load(paste(filepath,'Rdata/processedTokens.RData',sep="/"))
-load(paste(filepath,'Rdata/wordCocurrences.RData',sep="/"))
+load(paste0(filepath,'Rdata/processedStrings.RData'))
+load(paste0(filepath,'Rdata/processedTokens.RData'))

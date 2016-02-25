@@ -117,7 +117,59 @@ reload_cooccurrences <- function() {
 #   TermDocumentMatrix(corp, ctrl)
 # }
 
-
+cVectors<-function(target_corpus,dsm,window_length=15) {
+  #Create dataframe to save all context vectors
+  context_vector_df=data.frame('target','context_vector')
+  
+  #Transpose and convert dsm into indexical dataframe
+  dsm.df=data.frame(t(dsm))
+  
+  #for each document in corpus
+  for (i in length(target_corpus)){
+    
+    #extract text
+    text_string=target_corpus[[i]]$content
+    n=length(text_string)
+    
+    #Create dataframe
+    doc_context_vector_df=data.frame(text_string)
+    colnames(doc_context_vector_df)=c('target')
+    doc_context_vector_df$context_vector=""
+    
+    #For each word in corpus
+    for (j in n){
+      
+      #Set window bounds
+      lower_bound=j-15
+      upper_bound=j+15
+      if(lower_bound<1){
+        lower_bound=1
+      }
+      if(upper_bound>n){
+        upper_bound=n
+      }
+      
+      #Identify target word
+      id_word=text_string[j]
+      
+      #Get context vector ids and extract target word
+      context_names=text_string[lower_bound:upper_bound]
+      context_names=context_names[-j]
+      
+      #Create context vector for specified id
+      context_vector=vector(mode = 'list',length = length(context_names))
+      names(context_vector)=context_names
+      for (word_name in context_names){
+        #Get distributional vector for name and assign to 
+        context_vector[word_name]=dsm.df[word_name]
+      }
+      doc_context_vector_df$context_vector[j]=context_vector
+    }
+    #Bind document context vectors dataframe to main dataframe
+    context_vector_df=rbind(context_vector,doc_context_vector_df)
+  }
+  return(context_vector_df)
+}
 
 
 
