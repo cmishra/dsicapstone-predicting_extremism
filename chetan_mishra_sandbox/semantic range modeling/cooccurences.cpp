@@ -17,7 +17,6 @@ void load_string_sentence(std::vector< std::string > content);
 void log_context(std::string & target, std::vector<int> & context_indexes, std::vector<std::string> & content);
 bool is_end_of_sentence(std::string & str);
 void add_or_increment(std::string & key);
-Rcpp::DataFrame pull_table();
 std::string to_str(std::vector<int> vec);
 
 // [[Rcpp::export]]
@@ -157,36 +156,37 @@ void add_or_increment(std::string &  key)
   }
 }
 
-// wrapper function for c++ regex capabilities. assumes you you just want to match first.
-// [[Rcpp::export]]
-std::string str_extract_cpp(std::string str, std::string r_str) {
-  std::smatch str_match;
-  std::regex regex_str (r_str);
-  if (regex_match(str, str_match, regex_str))
-    return str_match[0];
-  else 
-    return "";
-}
+// Abandoned bc regex was posing very perplexing problems.
+// std::vector<std::string> str_extract_cpp(std::string str, std::string r_str) {
+//   std::smatch str_match;
+//   std::regex regex_str(r_str);
+//   bool match = regex_match(str, str_match, regex_str);
+//   std::vector<std::string> vec;
+//   for (std::string str : str_match) {
+//     vec.push_back(str);
+//   }
+//   return vec;
+// }
 
-// [[Rcpp::export]]
-Rcpp::DataFrame pull_table()
-{
-  std::vector<std::string> target(counter.map.size());
-  std::vector<std::string> context(counter.map.size());
-  std::vector<int> freq(counter.map.size());
-  
-  std::smatch str_match;
-  std::map<std::string, int>::iterator itr = counter.map.begin();
-  std::regex comp_key("(.+)" + counter.map_string + "(.+)");
-  for (itr = counter.map.begin(); itr != counter.map.end(); ++itr)
-  {
-    regex_match(itr -> first, str_match, comp_key);
-    target.push_back(str_match[0]);
-    context.push_back(str_match[1]);
-    freq.push_back(itr -> second);
-  }
-  return Rcpp::DataFrame::create(Rcpp::Named("target")=target,
-                                 Rcpp::Named("context")=context,
-                                 Rcpp::Named("freq")=freq);
-}
-
+// Abandoned bc regex was posing very perplexing problems.
+// Rcpp::DataFrame pull_table()
+// {
+//   std::vector<std::string> target(counter.map.size());
+//   std::vector<std::string> context(counter.map.size());
+//   std::vector<int> freq(counter.map.size());
+//   
+//   std::smatch str_match;
+//   std::map<std::string, int>::iterator itr = counter.map.begin();
+//   std::regex comp_key("(.+)" + counter.map_string + "(.+)");
+//   for (itr = counter.map.begin(); itr != counter.map.end(); ++itr)
+//   {
+//     regex_match(itr -> first, str_match, comp_key);
+//     target.push_back(str_match[0]);
+//     context.push_back(str_match[1]);
+//     freq.push_back(itr -> second);
+//   }
+//   return Rcpp::DataFrame::create(Rcpp::Named("target")=target,
+//                                  Rcpp::Named("context")=context,
+//                                  Rcpp::Named("freq")=freq);
+// }
+// 
