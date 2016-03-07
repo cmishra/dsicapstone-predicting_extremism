@@ -40,7 +40,7 @@ removeEmptyStrings <- cmpfun(function(x) {
   x[!nchar(x)==0]
 })
 
-randomDocSequence <- function(filepath,binsize)
+testTrainSplit <- function(filepath,binsize)
 {
   trainsample <- sample(seq(from=1,to=length(list.files(filepath))),.7*length(list.files(filepath)))
   testsample <- sample(seq(from=1,to=length(list.files(filepath))))[-trainsample]
@@ -108,43 +108,54 @@ randomDocSequence <- function(filepath,binsize)
   print(alldocs)
   
   alldocs_train <- t(as.data.frame(alldocs[1]))
-  row.names(alldocs_train) <- seq(nrow(alldocs_train))
+  #row.names(alldocs_train) <- seq(nrow(alldocs_train))
   write.csv(alldocs_train,paste(strsplit(filepath,"/")[[1]][1],"/RData/train_split.csv",sep=""))
   
   alldocs_test <- t(as.data.frame(alldocs[2]))
   row.names(alldocs_test) <- seq(nrow(alldocs_test))
-  write.csv(alldocs_test,paste(strsplit(filepath,"/")[[1]][1],"/RData/test_split.csv",sep=""))
+  write.csv(alldocs_test,paste(strsplit(filepath,"/")[[1]][1],"/RData/test_split.csv",sep=""),row.names = FALSE)
+}
+
+createBinnedCorpus <- function(filepath,indexlist)
+{
+  #traindocs <- read.csv(paste(filepath,"/RData/train_split.csv",sep=""),header = TRUE)
+  #traindocs <- traindocs[,-c(1)]
+  indexlist <- indexlist[!is.na(indexlist)]
+  indexlist <- as.numeric(indexlist)
+  dataCorpus <- VCorpus(DirSource(paste(filepath,"/Raw",sep="")))
+  binnedCorpus <- dataCorpus[indexlist]
+  return(binnedCorpus)
 }
 
 
 
-preprocessDocuments<-function(filepath,binsize,sequence){
+preprocessDocuments<-function(corpus,datafile_name){
   
   #dataCorpus <- getCorpus("Westboro")
   #Define corpuses for data
-  dataCorpus <- VCorpus(DirSource(filepath))
+  #filepath <- "WBC"
   
   #filepath <- "NaumanKhan/raw"
   #binsize <- 10
 
-  thesample <- sample(seq(from=1,to=length(dataCorpus)))
-  docsplit <- cut(thesample,length(dataCorpus)/binsize)
-  doccorpus <- Corpus(VectorSource(NULL))
+  #thesample <- sample(seq(from=1,to=length(dataCorpus)))
+  #docsplit <- cut(thesample,length(dataCorpus)/binsize)
+  #doccorpus <- Corpus(VectorSource(NULL))
   
-  for(i in 1:length(levels(docsplit)))
-  {
-    
-    temp <- which(as.numeric(docsplit)==i)
-    tempcorpus <- dataCorpus[temp]
-    doctemp <- NULL
-    #paste(tempcorpus[[2]][1])
-    for(j in 1:length(tempcorpus))
-    {
-      doctemp <- paste(doctemp,tempcorpus[[j]][1])
-    }
-    tempcorpus <- Corpus(VectorSource(doctemp))
-    
-    processedStrings<-tm_map(tempcorpus, content_transformer(individualizeEndOfSent))
+  #for(i in 1:length(levels(docsplit)))
+  #{
+#     
+#     temp <- which(as.numeric(docsplit)==i)
+#     tempcorpus <- dataCorpus[temp]
+#     doctemp <- NULL
+#     #paste(tempcorpus[[2]][1])
+#     for(j in 1:length(tempcorpus))
+#     {
+#       doctemp <- paste(doctemp,tempcorpus[[j]][1])
+#     }
+#     tempcorpus <- Corpus(VectorSource(doctemp))
+#     
+    processedStrings<-tm_map(corpus, content_transformer(individualizeEndOfSent))
     processedStrings<-tm_map(processedStrings, content_transformer(removePunctuationExceptPeriod))
     processedStrings<-tm_map(processedStrings, content_transformer(tolower))
     processedStrings<-tm_map(processedStrings, content_transformer(removeNumbers))
@@ -153,20 +164,20 @@ preprocessDocuments<-function(filepath,binsize,sequence){
     processedTokens<-tm_map(processedTokens, content_transformer(wordStem))
     processedTokens<-tm_map(processedTokens, content_transformer(removeEmptyStrings))
     
-    doccorpus <- c(doccorpus,processedTokens)
-  }
+   # doccorpus <- c(doccorpus,processedTokens)
+  #}
   
   
   #Preprocess combined documents into clean strings
   #Normalizes
   
   
-  return(doccorpus)
+  #return(processedTokens)
   #Save backup of processed strings
   #save(processedStrings, file=paste0(filepath,'/Rdata/processedStrings.RData'))
   
   #Save backup of processed tokens
-  #save(processedTokens, file=paste0(filepath,'/Rdata/processedTokens.RData'))
+  save(processedTokens, file=paste0(filepath,'/Rdata/processedTokens_',datafile_name,'.RData'))
   
 }
 # filepath="C:/Users/nmvenuti/Desktop/UVA MSDS/Capstone/webscraping westboro/"
@@ -233,6 +244,9 @@ get.pos.tag<-function(string){
 getTopAdjAdv <- function(filepath) {
   
   dataCorpus <- VCorpus(DirSource(filepath))
+  filepath = "DorothyDay/raw"
+  x <- c(1,2)
+  dataCorpus[[2]]
   #dataCorpus <- VCorpus(VectorSource("God is so good"))
   #dataCorpus <- VCorpus(DirSource("Lenin/raw/1"))
   #Preprocess combined documents into clean strings
@@ -290,7 +304,11 @@ getTopAdjAdv <- function(filepath) {
   topWords <- tagCount
   #topWords = tagCount[1:20,"Var1"]
   #topWords <- as.character(topWords)
-  topWords <- list(topWords,zlength,adjlength,advlength)
+  #topWords <- list(topWords,zlength,adjlength,advlength)
+  
+  write.csv(topWords, paste("Ref/",strsplit(filepath,"/")[[1]][1],"/targetwords.csv",sep = ""))
+  write(zlength, paste("Ref/",strsplit(filepath,"/")[[1]][1],"/length.txt",sep = ""))
+  
   return(topWords)
   
 }
