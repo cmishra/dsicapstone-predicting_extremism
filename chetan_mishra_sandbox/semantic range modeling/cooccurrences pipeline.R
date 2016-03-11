@@ -4,17 +4,20 @@ library(Rcpp)
 library(RcppArmadillo)
 library(stringr)
 
-load("path/to/processed/tokens")
-processed_tokens <- name_of_input_obj
-set_sepstring(occurrences_sepstr)
-invisible(lapply(processed_tokens, function(element) {
-  fasterCooccurrences(element$content, 4)
-}))
-cooccurrencesdata.table(output_to_df(map_info()))
-cooccurrences <- cooccurrences[,.(target, context, weight=as.integer(as.character(freq)))]
-reload_cooccurrences()
+output_cooccurrences <- function(filepath, window_length) {
+  load(paste(filepath, 'RData/processedTokens.RData',sep="/"))
+  processed_tokens <- name_of_input_obj
+  set_sepstring(occurrences_sepstr)
+  invisible(lapply(processed_tokens, function(element) {
+    fasterCooccurrences(element$content, 4)
+  }))
+  wordCoocurrences <- data.table(output_to_df(map_info()))
+  wordCoocurrences <- wordCoocurrences[,.(target, context, freq=as.integer(as.character(freq)))]
+  reload_cooccurrences()
+  
+  save(wordCoocurrences, file=paste(filepath, "RData/wordCocurrences.RData", sep='/'))
+}
 
-save(cooccurrences, file="path/to/saved/file/" + "cooccurrences.RData")
 
 
 

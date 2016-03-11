@@ -16,7 +16,7 @@ quantifyContextVectors<-function(filepath,most_freq_words,minMatches=25,window_l
   #Check Load requisite data
   load(paste(filepath,'Rdata/processedTokens.RData',sep="/"))
   load(paste(filepath,'Rdata/wordCocurrences.RData',sep="/"))
-  target_corpus=processedTokens
+  target_corpus <- processedTokens
   
   #Subset vectors
   countWords <- wordCoocurrences[,.(length(context)), 
@@ -30,15 +30,15 @@ quantifyContextVectors<-function(filepath,most_freq_words,minMatches=25,window_l
   rawDsm <- dsm(target=wordCoocurrences$target,
                 feature=wordCoocurrences$context,
                 score=wordCoocurrences$freq,
-                N=100)
+                N=100, raw.freq=TRUE)
   
   
   #Subset DSM for, project DSM into lower-dimenstional subspace
-  rawDSM <- subset(rawDSM, nnzero >= 10, nnzero >= 10, T)
-  dsmProj <- dsm.projection(rawDSM, "svd")
+  rawDsm <- subset(rawDsm, nnzero >= 10, nnzero >= 10, T)
+  dsmProj <- dsm.projection(rawDsm, "svd")
   
   #Transpose and convert dsm into indexical dataframe, only take first svd
-  dsmDF=data.frame(t(rawDSM[,1]))
+  dsmDF <- data.frame(t(rawDsm[,1]))
   
   
   #Get context vectors
@@ -47,17 +47,17 @@ quantifyContextVectors<-function(filepath,most_freq_words,minMatches=25,window_l
   for (i in 1:length(target_corpus)){
     
     #extract text
-    text_string=target_corpus[[i]]$content
-    n=length(text_string)
-    doc_context_vector_df=data.frame(text_string)
+    text_string <- target_corpus[[i]]$content
+    n <- length(text_string)
+    doc_context_vector_df <- data.frame(text_string)
     colnames(doc_context_vector_df)=c('target')
     doc_context_vector_df$context_vector=""
     
     for (j in 1:n){
       
       #Set window bounds
-      lower_bound=j-15
-      upper_bound=j+15
+      lower_bound <- window_length - 15
+      upper_bound <- window_length + 15
       if(lower_bound<1){
         lower_bound=1
       }
@@ -66,17 +66,17 @@ quantifyContextVectors<-function(filepath,most_freq_words,minMatches=25,window_l
       }
       
       #Identify target word
-      id_word=text_string[j]
+      id_word <- text_string[j]
       
       #Get context vector ids and extract target word
-      context_names=text_string[lower_bound:upper_bound]
+      context_names <- text_string[lower_bound:upper_bound]
       # context_names=context_names[-(j-lower_bound)]
       
       #Remove words stripped from dsm
-      context_names=context_names[context_names %in% colnames(dsmDF)]
+      context_names <- context_names[context_names %in% colnames(dsmDF)]
       
       #Add in section to extract context vectors
-      doc_context_vector_df$context_vector[j]=paste(context_names,collapse = "-") 
+      doc_context_vector_df$context_vector[j] <- paste(context_names,collapse = "-") 
       
     }
     
@@ -90,12 +90,12 @@ quantifyContextVectors<-function(filepath,most_freq_words,minMatches=25,window_l
   }
   
   #Loop through each word in words_to_analyze
-  words_to_analyze=len(most_freq_words)
+  words_to_analyze <- len(most_freq_words)
   cvCosineSim<-list(rep(0, words_to_analyze))
   for (word_id in 1:words_to_analyze){
     
     #Extract words
-    search_word=most_freq_words[word_id]
+    search_word <- most_freq_words[word_id]
     context_vector<-context_vector_df
     
     context_vector_subset<-context_vector$context_vector[context_vector$target==search_word]
@@ -117,7 +117,7 @@ quantifyContextVectors<-function(filepath,most_freq_words,minMatches=25,window_l
       unique_words<-unique(column_list)
       
       #Extract dsm columns for calculations
-      dsm.reduce=dsmDF[,unique_words]
+      dsm.reduce <- dsmDF[,unique_words]
       
       #Create empty matricies for x and y
       x_mat<-matrix(0,nrow=nrow(dsm.reduce),ncol=length(column_list))
@@ -126,19 +126,19 @@ quantifyContextVectors<-function(filepath,most_freq_words,minMatches=25,window_l
       for (k in 1:length(column_list)){
         #If column word in x_list, add to x_mat
         if(column_list[k] %in% x_list){
-          x_mat[,k]=dsm.reduce[,column_list[k]]
+          x_mat[,k] <- dsm.reduce[,column_list[k]]
         }
         #If column word in y_list, add to y_mat
         if(column_list[k] %in% y_list){
-          y_mat[,k]=dsm.reduce[,column_list[k]]
+          y_mat[,k] <- dsm.reduce[,column_list[k]]
         }
       }
       
       #Calculate cosine simularity
-      cosine_results[j]=cosine(as.vector(x_mat),as.vector(y_mat))[[1,1]]
+      cosine_results[j] <- cosine(as.vector(x_mat),as.vector(y_mat))[[1,1]]
     }
-    cosine_results_x=data.frame(cosine_results)
-    cvCosineSim[word_id]=apply(cosine_results_x,1,mean)
+    cosine_results_x <- data.frame(cosine_results)
+    cvCosineSim[word_id] <- apply(cosine_results_x,1,mean)
   }
   
   #Save backup for average cosine similarity
