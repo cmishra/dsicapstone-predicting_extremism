@@ -1,5 +1,7 @@
 
-estimate_cos_dist <- function(vectors, num_runs=1000) {
+estimate_cos_simil <- function(vectors, num_runs=1000) {
+  if (num_runs > length(vectors)*2)
+    num_runs <- length(vectors)*2
   require(lsa)
   cos_sum <- 0
   indexes <- 1:length(vectors)
@@ -10,4 +12,12 @@ estimate_cos_dist <- function(vectors, num_runs=1000) {
                            vectors[[index_B]])
   }
   cos_sum/length(vectors)
+}
+
+wordCo_filename <- function(folderpath, group_id) {
+  paste0(folderpath, "/Rdata/wordCo_", group_id, ".RData")
+}
+
+dsmProj_filename <- function(folderpath, group_id) {
+  paste0(folderpath, "/Rdata/dsmProj_", group_id, ".RData")
 }

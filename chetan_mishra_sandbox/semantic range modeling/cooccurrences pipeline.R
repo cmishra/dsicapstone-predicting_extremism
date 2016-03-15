@@ -4,9 +4,7 @@ library(Rcpp)
 library(RcppArmadillo)
 library(stringr)
 
-output_cooccurrences <- function(filepath, window_length) {
-  load(paste(filepath, 'RData/processedTokens.RData',sep="/"))
-  processed_tokens <- name_of_input_obj
+output_cooccurrences <- function(processed_tokens, folderpath, group_id, window_length) {
   set_sepstring(occurrences_sepstr)
   invisible(lapply(processed_tokens, function(element) {
     fasterCooccurrences(element$content, 4)
@@ -15,7 +13,7 @@ output_cooccurrences <- function(filepath, window_length) {
   wordCoocurrences <- wordCoocurrences[,.(target, context, freq=as.integer(as.character(freq)))]
   reload_cooccurrences()
   
-  save(wordCoocurrences, file=paste(filepath, "RData/wordCocurrences.RData", sep='/'))
+  save(wordCoocurrences, file=paste0(folderpath, "Rdata/wordCo_", group_id, ".RData"))
 }
 
 
