@@ -38,7 +38,7 @@ wordCoOccurences <- cmpfun(function(content, k, bySentence = F) {
 
 ###############################################################################################################################
 #Quantify context vectors
-createWordCoOccurences<-function(groupId,processedTokens,most_freq_words,minMatches=25,window_length=15,sim_count=1000){}
+createWordCoOccurences<-function(filepath,datafile_name,processedTokens,most_freq_words,minMatches=25,window_length=15,sim_count=1000){
   
   #Check Load requisite data
 
@@ -74,12 +74,12 @@ createWordCoOccurences<-function(groupId,processedTokens,most_freq_words,minMatc
   rawDSM <- subset(rawDSM, nnzero >= 10, nnzero >= 10, T)
   dsmProj <- dsm.projection(rawDSM, "svd")
   
-  #Save DSM projections
-  save(dsmProj, file=paste0(filepath,'/Rdata/dsmProj.RData')) 
-  
   #Transpose and convert dsm into indexical dataframe, only take first 300
   dsmDF=data.frame(t(dsmProj[,300]))
   
+  #Save DSM projections
+  save(dsmDF, file=paste0(filepath,'/Rdata/dsmDF_',datafile_name,'.RData'))
+}
   
   #Get context vectors
   
