@@ -1,7 +1,9 @@
 
 
-tot_frequency_DSM <- function(wordtable, filepath, top_portion=0.5) {
-  wordtable <- wordtable[
+tot_frequency_DSM <- function(wordtable, folderpath, group_id, top_portion=0.5) {
+  load(wordCo_filename(folderpath, group_id))
+  load(dsmProj_filename(folderpath, group_id))
+  wordCo <- wordCo[
     target %in% words
     ][
     order(target, -freq)
@@ -10,11 +12,12 @@ tot_frequency_DSM <- function(wordtable, filepath, top_portion=0.5) {
     ]
   
   # sum across words that constitute overall 'context'
-  targets_and_vectors <- rbindlist(lapply(words, function(target) {
-    data.frame(vector=estimate_cos_simil(dsm[wordtable[,context],]),
-               target=target)
-  }))
+  mean_similarity <- mean(unlist(lapply(words, function(target) {
+    vectors <- dsmProj[wordCo[,context],]
+    vectors <- split(vectors, seq(nrow(vectors)))
+    estimate_cos_simil(vectors)
+  })))
   
   data.frame(group=group_id,
-             )
+            acom=mean_similarity)
 }

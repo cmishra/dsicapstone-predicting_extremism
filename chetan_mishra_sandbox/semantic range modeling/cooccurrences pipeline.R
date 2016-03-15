@@ -13,7 +13,7 @@ output_cooccurrences <- function(processed_tokens, folderpath, group_id, window_
   wordCoocurrences <- wordCoocurrences[,.(target, context, freq=as.integer(as.character(freq)))]
   reload_cooccurrences()
   
-  save(wordCoocurrences, file=paste0(folderpath, "Rdata/wordCo_", group_id, ".RData"))
+  save(wordCoocurrences, file=wordCo_filename(folderpath, group_id))
 }
 
 

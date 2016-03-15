@@ -1,5 +1,7 @@
 
-network_signal <- function(dsm.proj, group_id) {
+network_signal <- function(folderpath, group_id) {
+  load(dsmProj_filename(folderpath, group_id))
+  dsm.proj <- dsmProj
   cosines <- dist.matrix(dsm.proj, names(dsm.proj), method="cosine")
   adjacency <- cosine
   adjacency[cosine >= 30] <- 0
