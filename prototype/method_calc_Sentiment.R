@@ -1,7 +1,6 @@
 #' Calculating Sentiment from Lexicon of Pos/Neg Words
 #' Lexicon Source: https://www.cs.uic.edu/~liub/FBS/sentiment-analysis.html#lexicon
 
-setwd('/Users/hopeemac/Documents/Code/GIT/dsicapstone-predicting_extremism/hope mci sandbox/SentLexicon')
 
 calc_Sentiment <- function(tokenizedCorpus, groupName) {
   
