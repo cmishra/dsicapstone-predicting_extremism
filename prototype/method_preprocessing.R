@@ -36,6 +36,6 @@ preprocessDocuments<-function(corpus,filepath,datafile_name){
   processedTokens<-tm_map(processedTokens, content_transformer(removeEmptyStrings))
   
   #Save backup of processed tokens
-  save(processedTokens, file=paste0(filepath,'/Rdata/processedTokens_',datafile_name,'.RData'))
+  save(processedTokens, file=paste0(filepath,'/RData/processedTokens_',datafile_name,'.RData'))
   
 }

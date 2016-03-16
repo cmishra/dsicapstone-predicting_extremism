@@ -5,6 +5,10 @@ create_Judgements <- function(corpus, groupName){
   
   toBe <- c("is","was","am","are","were","been","be","being")
   
+  sentence.annotator = Maxent_Sent_Token_Annotator()
+  token.annotator = Maxent_Word_Token_Annotator()
+  pos.annotator = Maxent_POS_Tag_Annotator()
+  
   # Iterate through all Documents
   bigMaster <- c()
   # for (d in 1:4){

@@ -83,14 +83,13 @@ createDSM<-function(filepath,datafile_name,wordCo){
                 score=wordCo$freq,
                 N=100)
   
-  
   #Subset DSM for, project DSM into lower-dimenstional subspace
   rawDSM <- subset(rawDSM, nnzero >= 10, nnzero >= 10, T)
-  dsmProj <- dsm.projection(rawDSM, "svd")
+  dsmProj <- dsm.projection(rawDSM, "svd", n=300)
   col(dsmProj)
   nrow(dsmProj)
   #Transpose and convert dsm into indexical dataframe, only take first 300
-  dsmProj=data.frame(t(dsmProj[,1:300]))
+  dsmProj=data.frame(dsmProj)
   dsmProjName<-dsmProj_filename(filepath, datafile_name)
   #Save DSM projections
   save(dsmProj, file=dsmProjName)
@@ -98,6 +97,7 @@ createDSM<-function(filepath,datafile_name,wordCo){
 
 #Quantify context vectors function
 quantifyContext<-function(filepath,datafile_name,target_corpus,dsmProj,most_freq_words,minMatches=25,window_length=15,sim_count=1000){
+  dsmProj <- t(dsmProj)
 #for each document in corpus
   for (i in 1:length(target_corpus)){
     
@@ -111,8 +111,8 @@ quantifyContext<-function(filepath,datafile_name,target_corpus,dsmProj,most_freq
     for (j in 1:n){
       
       #Set window bounds
-      lower_bound=j-15
-      upper_bound=j+15
+      lower_bound=j-window_length
+      upper_bound=j+window_length
       if(lower_bound<1){
         lower_bound=1
       }
@@ -134,7 +134,6 @@ quantifyContext<-function(filepath,datafile_name,target_corpus,dsmProj,most_freq
       doc_context_vector_df$context_vector[j]=paste(context_names,collapse = "-") 
       
     }
-    
     
     if(exists('context_vector_df')){
       context_vector_df<-rbind(context_vector_df,doc_context_vector_df)
@@ -198,4 +197,37 @@ quantifyContext<-function(filepath,datafile_name,target_corpus,dsmProj,most_freq
   return(groupCosineSim)
 }
 
+<<<<<<< HEAD
 
+=======
+# 
+# ########################################
+# #####Needed for testing will remove#####
+# ########################################
+# 
+# filepath="C:/Users/nmvenuti/Desktop/UVA MSDS/Capstone/webscraping westboro/"
+# datafile_name='test_1'
+# minMatches=25
+# window_length=15
+# most_freq_words=c('god','lord')
+# sim_count=1000
+# 
+# #Create processed_tokens fils
+# dataCorpus <- VCorpus(DirSource(paste(filepath,"/Raw",sep="")))
+# preprocessDocuments(dataCorpus,filepath,datafile_name)
+# 
+# #Test output of cooccurrences
+# load(paste(filepath,"Rdata/processedTokens_",datafile_name,'.Rdata',sep=""))
+# output_cooccurrences(processed_tokens, filepath, datafile_name, window_length)
+# # dsmProj<-dsmProjTest 
+# 
+# #Test DSM function
+# load(wordCo_filename(folderpath, group_id))
+# wordCo<-wordCooccurences
+# createDSM(filepath,datafile_name,wordCo)
+# 
+# #Test cv function
+# load(paste0(filepath, "RData/dsmProj_", datafile_name, ".RData"))
+# 
+# testCV<-quantifyContext(filepath,datafile_name,target_corpus,dsmProj,most_freq_words,minMatches=25,window_length=15,sim_count=1000)
+>>>>>>> e427fed59a989b3e9f98bc6e13bd321fd7db7e0f

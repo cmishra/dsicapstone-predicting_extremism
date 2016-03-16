@@ -2,71 +2,73 @@
 #####Context vectors Function#####
 ##################################
 #Load requisite packages
-setwd("~/GitHub/dsicapstone-predicting_extremism/nmvenuti_sandbox")
+setwd("~/GitHub/dsicapstone-predicting_extremism/prototype")
 library(lsa)
-source("preprocessing.R")
+source("method_preprocessing.R")
+source("method_monteCarlo.R")
 
 filepath="C:/Users/nmvenuti/Desktop/UVA MSDS/Capstone/webscraping westboro/"
+datafile_name='test_1'
 minMatches=25
 window_length=15
 most_freq_words=c('god','lord')
 sim_count=1000
 
 #Co occurenn
-wordCoOccurences <- cmpfun(function(content, k, bySentence = F) {
-  if (length(content) == 1)
-    return(data.table())
-  endOfSentences <- which(content == ".")
-  ret <- rbindlist(lapply(1:length(content), function(i) {
-    if (bySentence) {
-      beforePeriodIndexes <- endOfSentences < i
-      startingIndex <- max(c(endOfSentences[beforePeriodIndexes], 0))
-      endingIndex <- min(c(endOfSentences[!beforePeriodIndexes], length(content)))
-      contextWords <- content[setdiff(startingIndex:endingIndex, i)]
-    } else {
-      contextWords <- c(tail(content[setdiff(1:(i-1), endOfSentences)], k),
-                        head(content[
-                          setdiff((i+1):length(content), endOfSentences)], k))
-    }
-    data.frame(target=content[i], context=contextWords, freq=1)
-    # as.data.table(data.frame(target=content[i], context=contextWords, freq=1))
-  }))
-  # ret[,.(freq=sum(freq)), by=.(target, context)][!(target == "." | context == ".")]
-})
+# wordCoOccurences <- cmpfun(function(content, k, bySentence = F) {
+#   if (length(content) == 1)
+#     return(data.table())
+#   endOfSentences <- which(content == ".")
+#   ret <- rbindlist(lapply(1:length(content), function(i) {
+#     if (bySentence) {
+#       beforePeriodIndexes <- endOfSentences < i
+#       startingIndex <- max(c(endOfSentences[beforePeriodIndexes], 0))
+#       endingIndex <- min(c(endOfSentences[!beforePeriodIndexes], length(content)))
+#       contextWords <- content[setdiff(startingIndex:endingIndex, i)]
+#     } else {
+#       contextWords <- c(tail(content[setdiff(1:(i-1), endOfSentences)], k),
+#                         head(content[
+#                           setdiff((i+1):length(content), endOfSentences)], k))
+#     }
+#     data.frame(target=content[i], context=contextWords, freq=1)
+#     # as.data.table(data.frame(target=content[i], context=contextWords, freq=1))
+#   }))
+#   # ret[,.(freq=sum(freq)), by=.(target, context)][!(target == "." | context == ".")]
+# })
 
 
 
 ###############################################################################################################################
 #Quantify context vectors
-createWordCoOccurences<-function(filepath,datafile_name,processedTokens,most_freq_words,minMatches=25,window_length=15,sim_count=1000){
+# createWordCoOccurences<-function(filepath,datafile_name,processedTokens){
+#   
+#   #Check Load requisite data
+# 
+#   target_corpus<-processedTokens
+#   #Create coocurence matrix
+#   k=5
+#   bySentence=F
+#   wordCooccurences<-rbindlist(lapply( target_corpus, function(doc) wordCoOccurences(doc$content, k, bySentence)))
+#   wordCooccurences<-wordCooccurences[target != "." & context != ".",
+#                                      .(freq=sum(freq)), 
+#                                      .(target, context)]
+#   save(wordCooccurences, file=paste0(filepath,'/Rdata/wordCooccurences_',datafile_name,'.RData'))
+# }  
   
-  #Check Load requisite data
-
-  target_corpus<-processedTokens
-  #Create coocurence matrix
-  k=5
-  bySentence=F
-  wordCooccurences<-rbindlist(lapply( target_corpus, function(doc) wordCoOccurences(doc$content, k, bySentence)))
-  wordCooccurences<-wordCooccurences[target != "." & context != ".",
-                                     .(freq=sum(freq)), 
-                                     .(target, context)]
-  save(wordCooccurences, file=paste0(filepath,'/Rdata/wordCoocurrences.RData')) 
-  
-  
-  
-  
+ 
+createDSM<-function(filepath,datafile_name,wordCo){
   #Subset vectors only greater than min matches
-  countWords <- wordCooccurences[,.(length(context)), 
+  countWords <- wordCo[,.(length(context)), 
                                  by=target][V1 > minMatches]$target
-  wordCooccurences <- wordCooccurences[target %in% countWords &
+  wordCo <- wordCo[target %in% countWords &
                                          context %in% countWords]
-  wordCooccurences[,c("target", "context"):=
+  wordCo[,c("target", "context"):=
                      list(as.factor(target), as.factor(context))]
   
   #run Distributional semantic model(DSM)
-  rawDSM <- dsm(target=wordCooccurences$target,
-                feature=wordCooccurences$context,
-                score=wordCooccurences$freq,
+  rawDSM <- dsm(target=wordCo$target,
+                feature=wordCo$context,
+                score=wordCo$freq,
                 N=100)
   
   
@@ -75,14 +77,15 @@ createWordCoOccurences<-function(filepath,datafile_name,processedTokens,most_fre
   dsmProj <- dsm.projection(rawDSM, "svd")
   
   #Transpose and convert dsm into indexical dataframe, only take first 300
-  dsmDF=data.frame(t(dsmProj[,300]))
+  dsmProj=data.frame(t(dsmProj[,300]))
   
+  dsmProjName<-dsmProj_filename(filepath, datafile_name)
   #Save DSM projections
-  save(dsmDF, file=paste0(filepath,'/Rdata/dsmDF_',datafile_name,'.RData'))
+  save(dsmProj, file=dsmProjName)
 }
-  
+ 
   #Get context vectors
-  
+quantifyContext<-function(filepath,datafile_name,target_corpus,dsmProj,most_freq_words,minMatches=25,window_length=15,sim_count=1000){ 
   #for each document in corpus
   for (i in 1:length(target_corpus)){
     
@@ -132,7 +135,7 @@ createWordCoOccurences<-function(filepath,datafile_name,processedTokens,most_fre
   #Loop through each word in words_to_analyze
   words_to_analyze=length(most_freq_words)
   cvCosineSim<-list(rep(0, words_to_analyze))
-  
+    
   for (word_id in 1:words_to_analyze){
     
     #Extract words
@@ -140,51 +143,33 @@ createWordCoOccurences<-function(filepath,datafile_name,processedTokens,most_fre
     
     context_vector_subset<-context_vector_df$context_vector[context_vector_df$target==search_word]
     
-    cosine_results <- list(rep(0, sim_count))
-    
-    for (j in 1:sim_count){
-      
-      x=ceiling(runif(sim_count,min = 0,max = length(context_vector_subset)))
-      y=ceiling(runif(sim_count,min = 0,max = length(context_vector_subset)))
-      
-      
-      
-      x_list=as.vector(strsplit(context_vector_subset[x[j]],"-"))[[1]]
-      y_list=as.vector(strsplit(context_vector_subset[y[j]],"-"))[[1]]
-      
+    #Calculate context vectors
+    for (cvIndex in 1:nrow(context_vector_subset)){
+      cvWords=as.vector(strsplit(context_vector_subset[cvIndex],"-"))[[1]]
       #Get list of unique words
-      column_list<-c(x_list,y_list)
-      unique_words<-unique(column_list)
+      unique_words<-unique(cvWords)
       
       #Extract dsm columns for calculations
-      dsm.reduce=dsmDF[,unique_words]
+      dsm.reduce=dsmProj[,unique_words]
+
+      #Create empty vector for cv
+      cv<-rep(0,nrow(dsm.reduce))
       
-      #Create empty matricies for x and y
-      x_mat<-rep(0,nrow(dsm.reduce))
-      y_mat<-x_mat
-      
-      for (k in 1:length(column_list)){
-        #If column word in x_list, add to x_mat
-        if(column_list[k] %in% x_list){
-          x_mat=dsm.reduce[,column_list[k]]+x_mat
-        }
-        #If column word in y_list, add to y_mat
-        if(column_list[k] %in% y_list){
-          y_mat=dsm.reduce[,column_list[k]]+y_mat
-        }
+      #Calculate context vector
+      for (wordIndex in 1:length(unique_words)){
+        cv=dsm.reduce[,unique_words[wordIndex]]+cv
       }
       
-      #Calculate cosine simularity
-      cosine_results[j]=cosine(as.vector(x_mat),as.vector(y_mat))[[1,1]]
     }
-    cosine_results_x=data.frame(cosine_results)
-    cvCosineSim[word_id]=apply(cosine_results_x,1,mean)
+    
+    #Calculate cosine similarity of context vectors
+    cvCosineSim[word_id]=estimate_cos_simil(cv,sim_count)
   }
   
   #Save backup for average cosine similarity
   save(cvCosineSim, file=paste(filepath,'Rdata/cvCosineSim.RData',sep="/"))
-
+}
 
 #TEst function
-quantifyContextVectors(filepath,most_freq_words,minMatches,window_length,sim_count)
-load(paste(filepath,'Rdata/cvCosineSim.RData',sep="/"))
+wordCo<-wordCooccurences
+createDSM(filepath,datafile_name,wordCo)
