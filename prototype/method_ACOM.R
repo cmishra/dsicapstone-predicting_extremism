@@ -1,8 +1,6 @@
 
 
-tot_frequency_DSM <- function(wordtable, folderpath, group_id, top_portion=0.5) {
-  load(wordCo_filename(folderpath, group_id))
-  load(dsmProj_filename(folderpath, group_id))
+tot_frequency_DSM <- function(wordCo, dsm, group_id, top_portion=0.5) {
   wordCo <- wordCo[
     target %in% words
     ][

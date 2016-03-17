@@ -248,5 +248,38 @@ runPrototype <- function(filepath, resample = F,
     }
     write.csv(cvMetrics, "./data_dsicap/ref/signal_semContext.csv")
   }
+  
+  #Quantify network, ACOM
+  if (semACOMAndNetwork == T){
+    cvMetrics <- c()
+    for (group in groups) {
+      print(group)
+      for (type in c('train','test')){
+        dataFiles <- list.files(paste0('./data_dsicap/',group,"/RData"))
+        bins <- dataFiles[str_detect(dataFiles,paste0('processedTokens_',type,"[0-9]+"))]
+        for (binnedTokens in bins) {
+          print(binnedTokens)
+          
+          #Load DSM
+          dsmName<-paste0('dsmProj_',gsub("processedTokens_", "", binnedTokens))
+          load(paste0('./data_dsicap/',group,'/RData/',dsmName))
+          
+          #Load targetWords
+          targetWord_fileName <- paste0("targetWords","_",type,gsub("[^0-9]","",binnedTokens),".csv")
+          targetWords <- read.csv(paste0('./data_dsicap/',group,'/RData/',targetWord_fileName), stringsAsFactors = F)
+
+          acom_Metrics <- tot_frequency_DSM(wordCo, dsmProj, datafile_name)
+          acom_cvMetrics <- rbind(acom_cvMetrics, acom_metrics)
+          network_Metrics <- network_signal(dsmProj, datafile_name)
+          network_cvMetrics <- rbind(network_cvMetrics, network_metrics)
+          
+          remove(processedTokens)
+          remove(dsmProj)
+          remove(targetWords)
+        }
+      }
+    }
+    write.csv(cvMetrics, "./data_dsicap/ref/signal_semContext.csv")
+  }
 
 }
