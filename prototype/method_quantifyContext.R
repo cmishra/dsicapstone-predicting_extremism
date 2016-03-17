@@ -1,75 +1,46 @@
-##################################
-#####Context vectors Function#####
-##################################
-#Load requisite packages
-setwd("~/GitHub/dsicapstone-predicting_extremism")
-library(lsa)
 
-library(tm)
-library(wordspace)
-library(RWeka)
-library(SnowballC)
-library(parallel)
-library(data.table)
-library(compiler)
-library(Rcpp)
-library(RcppArmadillo)
-# library(testthat)
-library(stringr)
-source("prototype/method_preprocessing.R")#Libraries in this package bring into main script
-# source("prototype/method_dsmstuff.R") #Libraries in this package bring into main script, requires installlation of Rtools
-# library(installr)
-# install.Rtools()
 
-#Filename packages
-wordCo_filename <- function(folderpath, group_id) {
-  paste0(folderpath, "/Rdata/wordCo_", group_id, ".RData")
-}
-
-dsmProj_filename <- function(folderpath, group_id) {
-  paste0(folderpath, "/Rdata/dsmProj_", group_id, ".RData")
-}
-
-#Cooccurence function
-wordCoOccurences <- cmpfun(function(content, k, bySentence = F) {
-  if (length(content) == 1)
-    return(data.table())
-  endOfSentences <- which(content == ".")
-  ret <- rbindlist(lapply(1:length(content), function(i) {
-    if (bySentence) {
-      beforePeriodIndexes <- endOfSentences < i
-      startingIndex <- max(c(endOfSentences[beforePeriodIndexes], 0))
-      endingIndex <- min(c(endOfSentences[!beforePeriodIndexes], length(content)))
-      contextWords <- content[setdiff(startingIndex:endingIndex, i)]
-    } else {
-      contextWords <- c(tail(content[setdiff(1:(i-1), endOfSentences)], k),
-                        head(content[
-                          setdiff((i+1):length(content), endOfSentences)], k))
-    }
-    data.frame(target=content[i], context=contextWords, freq=1)
-    # as.data.table(data.frame(target=content[i], context=contextWords, freq=1))
-  }))
-  # ret[,.(freq=sum(freq)), by=.(target, context)][!(target == "." | context == ".")]
-})
-
- createWordCoOccurences<-function(filepath,datafile_name,processedTokens){
-
-   #Check Load requisite data
-
-   target_corpus<-processedTokens
-   #Create coocurence matrix
-   k=5
-   bySentence=F
-   wordCooccurences<-rbindlist(lapply( target_corpus, function(doc) wordCoOccurences(doc$content, k, bySentence)))
-   wordCooccurences<-wordCooccurences[target != "." & context != ".",
-                                      .(freq=sum(freq)),
-                                      .(target, context)]
-   save(wordCooccurences, file=paste0(filepath,'/Rdata/wordCooccurences_',datafile_name,'.RData'))
-}
+#Cooccurence function - Replaced by Cha-Tan's Word
+# wordCoOccurences <- cmpfun(function(content, k, bySentence = F) {
+#   if (length(content) == 1)
+#     return(data.table())
+#   endOfSentences <- which(content == ".")
+#   ret <- rbindlist(lapply(1:length(content), function(i) {
+#     if (bySentence) {
+#       beforePeriodIndexes <- endOfSentences < i
+#       startingIndex <- max(c(endOfSentences[beforePeriodIndexes], 0))
+#       endingIndex <- min(c(endOfSentences[!beforePeriodIndexes], length(content)))
+#       contextWords <- content[setdiff(startingIndex:endingIndex, i)]
+#     } else {
+#       contextWords <- c(tail(content[setdiff(1:(i-1), endOfSentences)], k),
+#                         head(content[
+#                           setdiff((i+1):length(content), endOfSentences)], k))
+#     }
+#     data.frame(target=content[i], context=contextWords, freq=1)
+#     # as.data.table(data.frame(target=content[i], context=contextWords, freq=1))
+#   }))
+#   # ret[,.(freq=sum(freq)), by=.(target, context)][!(target == "." | context == ".")]
+# })
+# 
+#  createWordCoOccurences<-function(filepath,datafile_name,processedTokens){
+# 
+#    #Check Load requisite data
+# 
+#    target_corpus<-processedTokens
+#    #Create coocurence matrix
+#    k=5
+#    bySentence=F
+#    wordCooccurences<-rbindlist(lapply( target_corpus, function(doc) wordCoOccurences(doc$content, k, bySentence)))
+#    wordCooccurences<-wordCooccurences[target != "." & context != ".",
+#                                       .(freq=sum(freq)),
+#                                       .(target, context)]
+#    save(wordCooccurences, file=paste0(filepath,'Rdata/wordCooccurences_',datafile_name,'.RData'))
+# }
   
 #Create DSM function 
 createDSM<-function(filepath,datafile_name,wordCo){
   #Subset vectors only greater than min matches
+  minMatches = 10
   countWords <- wordCo[,.(length(context)), 
                                  by=target][V1 > minMatches]$target
   wordCo <- wordCo[target %in% countWords &
@@ -150,7 +121,15 @@ quantifyContext<-function(filepath,datafile_name,target_corpus,dsmProj,most_freq
   for (word_id in 1:words_to_analyze){
     
     #Extract words
+    print(word_id)
+    print(class(word_id))
+    
     search_word<-most_freq_words[word_id]
+    
+    print(search_word)
+    print(class(search_word))
+    print(length(context_vector_df))
+    print(colnames(context_vector_df))
     
     context_vector_subset<-context_vector_df$context_vector[context_vector_df$target==search_word]
     if(length(context_vector_subset>0)){
@@ -193,41 +172,11 @@ quantifyContext<-function(filepath,datafile_name,target_corpus,dsmProj,most_freq
   }
   groupCosineSim<-data.frame(t(cvCosineSim))
   groupCosineSim$V1<-datafile_name
+  
+
+  cvColumns<-paste('word_',1:length(most_freq_words),sep="")
+  colnames(groupCosineSim)<-c('groupName',cvColumns)
+
   #Return dataframe with cvCosineSim
   return(groupCosineSim)
 }
-
-<<<<<<< HEAD
-
-=======
-# 
-# ########################################
-# #####Needed for testing will remove#####
-# ########################################
-# 
-# filepath="C:/Users/nmvenuti/Desktop/UVA MSDS/Capstone/webscraping westboro/"
-# datafile_name='test_1'
-# minMatches=25
-# window_length=15
-# most_freq_words=c('god','lord')
-# sim_count=1000
-# 
-# #Create processed_tokens fils
-# dataCorpus <- VCorpus(DirSource(paste(filepath,"/Raw",sep="")))
-# preprocessDocuments(dataCorpus,filepath,datafile_name)
-# 
-# #Test output of cooccurrences
-# load(paste(filepath,"Rdata/processedTokens_",datafile_name,'.Rdata',sep=""))
-# output_cooccurrences(processed_tokens, filepath, datafile_name, window_length)
-# # dsmProj<-dsmProjTest 
-# 
-# #Test DSM function
-# load(wordCo_filename(folderpath, group_id))
-# wordCo<-wordCooccurences
-# createDSM(filepath,datafile_name,wordCo)
-# 
-# #Test cv function
-# load(paste0(filepath, "RData/dsmProj_", datafile_name, ".RData"))
-# 
-# testCV<-quantifyContext(filepath,datafile_name,target_corpus,dsmProj,most_freq_words,minMatches=25,window_length=15,sim_count=1000)
->>>>>>> e427fed59a989b3e9f98bc6e13bd321fd7db7e0f

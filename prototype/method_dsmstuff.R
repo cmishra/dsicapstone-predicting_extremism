@@ -15,11 +15,11 @@ estimate_cos_simil <- function(vectors, num_runs=1000) {
 }
 
 wordCo_filename <- function(folderpath, group_id) {
-  paste0(folderpath, "/Rdata/wordCo_", group_id, ".RData")
+  paste0(folderpath, "/wordCo_", group_id, ".RData")
 }
 
 dsmProj_filename <- function(folderpath, group_id) {
-  paste0(folderpath, "/Rdata/dsmProj_", group_id, ".RData")
+  paste0(folderpath, "/dsmProj_", group_id, ".RData")
 }
 
 ignore_note <- function() {cat("RCPP functions loaded and data reset")}
