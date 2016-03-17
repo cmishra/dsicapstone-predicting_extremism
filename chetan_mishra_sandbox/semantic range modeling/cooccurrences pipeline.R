@@ -9,11 +9,11 @@ output_cooccurrences <- function(processed_tokens, folderpath, group_id, window_
   invisible(lapply(processed_tokens, function(element) {
     fasterCooccurrences(element$content, 4)
   }))
-  wordCoocurrences <- data.table(output_to_df(map_info()))
-  wordCoocurrences <- wordCoocurrences[,.(target, context, freq=as.integer(as.character(freq)))]
+  wordCo <- data.table(output_to_df(map_info()))
+  wordCo <- wordCo[,.(target, context, freq=as.integer(as.character(freq)))]
   reload_cooccurrences()
   
-  save(wordCoocurrences, file=wordCo_filename(folderpath, group_id))
+  save(wordCo, file=wordCo_filename(folderpath, group_id))
 }
 
 
