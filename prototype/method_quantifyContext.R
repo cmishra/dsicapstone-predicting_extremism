@@ -60,7 +60,6 @@ createDSM<-function(filepath,datafile_name,wordCo){
   col(dsmProj)
   nrow(dsmProj)
   #Transpose and convert dsm into indexical dataframe, only take first 300
-  dsmProj=data.frame(dsmProj)
   dsmProjName<-dsmProj_filename(filepath, datafile_name)
   #Save DSM projections
   save(dsmProj, file=dsmProjName)
@@ -68,7 +67,7 @@ createDSM<-function(filepath,datafile_name,wordCo){
 
 #Quantify context vectors function
 quantifyContext<-function(filepath,datafile_name,target_corpus,dsmProj,most_freq_words,minMatches=25,window_length=15,sim_count=1000){
-  dsmProj <- t(dsmProj)
+  dsmProj <- t(data.frame(dsmProj))
 #for each document in corpus
   for (i in 1:length(target_corpus)){
     
