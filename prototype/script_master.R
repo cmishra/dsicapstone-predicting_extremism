@@ -7,7 +7,8 @@ runPrototype <- function(filepath, resample = F,
                        BOW = F,
                        createCo = F,
                        createDSM = F,
-                       semContext = F) {
+                       semContext = F,
+                       semACOMAndNetwork = F) {
   
   # All Required Packages
   # Need to figure out 'wordspace'
@@ -251,27 +252,34 @@ runPrototype <- function(filepath, resample = F,
   
   #Quantify network, ACOM
   if (semACOMAndNetwork == T){
-    cvMetrics <- c()
-    for (group in groups) {
+    acom_All <- c()
+    network_All<- c()
+    for (group in groups[1]) {
       print(group)
       for (type in c('train','test')){
         dataFiles <- list.files(paste0('./data_dsicap/',group,"/RData"))
-        bins <- dataFiles[str_detect(dataFiles,paste0('processedTokens_',type,"[0-9]+"))]
-        for (binnedTokens in bins) {
-          print(binnedTokens)
+        IDs <- unique(str_extract(dataFiles,paste0(type,"[0-9]+")))
+        IDs <- IDs[!is.na(IDs)]
+        for (id in IDs) {
+          groupID <- paste0(group,"_",id)
+          print(groupID)
           
           #Load DSM
-          dsmName<-paste0('dsmProj_',gsub("processedTokens_", "", binnedTokens))
+          dsmName<-paste0('dsmProj_', id,'.RData')
           load(paste0('./data_dsicap/',group,'/RData/',dsmName))
           
+          # Load WordCo
+          wordCoName<-paste0('wordCo_',id,'.RData')
+          load(paste0('./data_dsicap/',group,'/RData/',wordCoName))
+          
           #Load targetWords
-          targetWord_fileName <- paste0("targetWords","_",type,gsub("[^0-9]","",binnedTokens),".csv")
+          targetWord_fileName <- paste0("targetWords","_",type,gsub("[^0-9]","",id),".csv")
           targetWords <- read.csv(paste0('./data_dsicap/',group,'/RData/',targetWord_fileName), stringsAsFactors = F)
-
-          acom_Metrics <- tot_frequency_DSM(wordCo, dsmProj, datafile_name)
-          acom_cvMetrics <- rbind(acom_cvMetrics, acom_metrics)
-          network_Metrics <- network_signal(dsmProj, datafile_name)
-          network_cvMetrics <- rbind(network_cvMetrics, network_metrics)
+          
+          acom_result <- tot_frequency_DSM(wordCo, dsmProj, targetWords, groupID)
+          acom_All <- rbind(acom_All, acom_result)
+          network_result <- network_signal(dsmProj, groupID)
+          network_All <- rbind(network_All, network_result)
           
           remove(processedTokens)
           remove(dsmProj)
@@ -279,7 +287,7 @@ runPrototype <- function(filepath, resample = F,
         }
       }
     }
-    write.csv(cvMetrics, "./data_dsicap/ref/signal_semContext.csv")
+    write.csv(cvMetrics, "./data_dsicap/ref/signal_semACOMAndNetwork.csv")
   }
 
 }

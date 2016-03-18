@@ -1,6 +1,6 @@
 
 
-tot_frequency_DSM <- function(wordCo, dsm, group_id, top_portion=0.5) {
+tot_frequency_DSM <- function(wordCo, dsmProj, words, group_id, top_portion=0.5) {
   wordCo <- wordCo[
     target %in% words
     ][
