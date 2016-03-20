@@ -2,7 +2,7 @@
 
 tot_frequency_DSM <- function(wordCo, dsmProj, words, group_id, top_portion=0.5) {
   wordCo <- wordCo[
-    target %in% words
+    target %in% words & context %in% rownames(dsmProj)
     ][
     order(target, -freq)
     ][
@@ -10,8 +10,9 @@ tot_frequency_DSM <- function(wordCo, dsmProj, words, group_id, top_portion=0.5)
     ]
   
   # sum across words that constitute overall 'context'
-  mean_similarity <- mean(unlist(lapply(words, function(target) {
-    vectors <- dsmProj[wordCo[,context],]
+  mean_similarity <- mean(unlist(lapply(words, function(word) {
+    vectors <- wordCo[target == word,as.character(context)]
+    vectors <- dsmProj[vectors,]
     vectors <- lapply(split(vectors, seq(nrow(vectors))), unlist)
     estimate_cos_simil(vectors)
   })))

@@ -16,7 +16,6 @@ create_Judgements <- function(corpus, groupName){
   for (d in 1:length(corpus)){
     #doc <- corpus[[d]]$content
     doc <- as.String(corpus[[d]])
-    print(meta(corpus[[d]], "id"))
     ##### Sentence segmentation -- assumes you have a document (our "text" variable)
     #####
     # sentence.annotator = Maxent_Sent_Token_Annotator()

@@ -8,7 +8,8 @@ runPrototype <- function(filepath, resample = F,
                        createCo = F,
                        createDSM = F,
                        semContext = F,
-                       semACOMAndNetwork = F) {
+                       semACOM = F,
+                       network = F) {
   
   # All Required Packages
   # Need to figure out 'wordspace'
@@ -77,7 +78,7 @@ runPrototype <- function(filepath, resample = F,
     allTopAdjAdv <- c()
     for (group in groups) {
       print(group)
-      for (type in c('test')){
+      for (type in c('train','test')){
         indices <- read.csv(paste0('./data_dsicap/',group,'/RData/',type,'_split.csv'))
         for (i in seq(1,nrow(indices))){
           print(i)
@@ -116,14 +117,18 @@ runPrototype <- function(filepath, resample = F,
       print(group)
       for (type in c('train','test')){
         dataFiles <- list.files(paste0('./data_dsicap/',group,"/RData"))
-        bins <- dataFiles[str_detect(dataFiles,paste0(type,"[0-9]+"))]
-        for (binnedTokens in bins) {
-          print(binnedTokens)
+        IDs <- unique(str_extract(dataFiles,paste0(type,"[0-9]+")))
+        IDs <- IDs[!is.na(IDs)]
+        for (id in IDs) {
+          print(id)
           # Load in Preprocessed Strings to Process for Sentiment
           # load('./WBC/RData/processedStrings.RData')
-          load(paste0('./data_dsicap/',group,'/RData/',binnedTokens))
+          #Load DSM
+          tokName<-paste0('processedTokens_', id,'.RData')
+          load(paste0('./data_dsicap/',group,'/RData/',tokName))
+          #load(paste0('./data_dsicap/',group,'/RData/',binnedTokens))
           
-          metrics <- calc_Sentiment(processedTokens, paste0(group,"_",type,gsub("[^0-9]","",binnedTokens)))
+          metrics <- calc_Sentiment(processedTokens, paste0(group,"_",id))
           sentimentMetrics <- rbind(sentimentMetrics, metrics)
           
           remove(processedTokens)
@@ -144,14 +149,19 @@ runPrototype <- function(filepath, resample = F,
       print(group)
       for (type in c('train','test')){
         dataFiles <- list.files(paste0('./data_dsicap/',group,"/RData"))
-        bins <- dataFiles[str_detect(dataFiles,paste0(type,"[0-9]+"))]
-        for (binnedTokens in bins) {
-          print(binnedTokens)
+        IDs <- unique(str_extract(dataFiles,paste0(type,"[0-9]+")))
+        IDs <- IDs[!is.na(IDs)]
+        
+        for (id in IDs) {
+          print(id)
           # Load in Preprocessed Strings to Process for Sentiment
           # load('./WBC/RData/processedStrings.RData')
-          load(paste0('./data_dsicap/',group,'/RData/',binnedTokens))
+          tokName<-paste0('processedTokens_',id,'.RData')
           
-          metrics <- create_Judgements(processedTokens, paste0(group,"_",type,gsub("[^0-9]","",binnedTokens)))
+          
+          load(paste0('./data_dsicap/',group,'/RData/',tokName))
+          
+          metrics <- create_Judgements(processedTokens, paste0(group,"_",id))
           jugMetrics <- rbind(jugMetrics, metrics)
           
           remove(processedTokens)
@@ -197,9 +207,9 @@ runPrototype <- function(filepath, resample = F,
       print(group)
       for (type in c('train','test')){
         dataFiles <- list.files(paste0('./data_dsicap/',group,"/RData"))
-        print(dataFiles)
+        # print(dataFiles)
         bins <- dataFiles[str_detect(dataFiles,paste0('wordCo_',type,"[0-9]+"))]
-        print(bins)
+        # print(bins)
         for (binnedCooccurences in bins) {
           print(binnedCooccurences)
           print(paste0('./data_dsicap/',group,'/RData/',binnedCooccurences))
@@ -207,7 +217,7 @@ runPrototype <- function(filepath, resample = F,
           datafile_name<-paste0(type,gsub("[^0-9]","",binnedCooccurences))
           filepath<-paste0('./data_dsicap/',group,'/RData/')
           createDSM(filepath,datafile_name,wordCo)
-          
+          print("completed bin")
           remove(wordCo)
         }
       }
@@ -221,40 +231,52 @@ runPrototype <- function(filepath, resample = F,
       print(group)
       for (type in c('train','test')){
         dataFiles <- list.files(paste0('./data_dsicap/',group,"/RData"))
-        bins <- dataFiles[str_detect(dataFiles,paste0('processedTokens_',type,"[0-9]+"))]
-        for (binnedTokens in bins) {
-          print(binnedTokens)
+        IDs <- unique(str_extract(dataFiles,paste0(type,"[0-9]+")))
+        IDs <- IDs[!is.na(IDs)]
+        for (id in IDs) {
+          groupID <- paste0(group,"_",id)
+          print(groupID)
           
           #Load processed tokens
-          load(paste0('./data_dsicap/',group,'/RData/',binnedTokens))
+          tokName<-paste0('processedTokens_', id,'.RData')
+          load(paste0('./data_dsicap/',group,'/RData/',tokName))
           
           #Load DSM
-          dsmName<-paste0('dsmProj_',gsub("processedTokens_", "", binnedTokens))
+          dsmName<-paste0('dsmProj_', id,'.RData')
           load(paste0('./data_dsicap/',group,'/RData/',dsmName))
           
           #Load targetWords
-          targetWord_fileName <- paste0("targetWords","_",type,gsub("[^0-9]","",binnedTokens),".csv")
+          #Load targetWords
+          targetWord_fileName <- paste0("targetWords","_",id,".csv")
           targetWords <- read.csv(paste0('./data_dsicap/',group,'/RData/',targetWord_fileName), stringsAsFactors = F)
           #targetName<-paste0('targetWords_',gsub("processedTokens_", "", binnedTokens))
           #load(paste0('./data_dsicap/',group,'/RData/',targetName))
-          
-          metrics <- quantifyContext(filepath,datafile_name,processedTokens,dsmProj,targetWords$Var1[1:20],minMatches=25,window_length=15,sim_count=1000)
+          print("before quantyifty context")
+          metrics <- quantifyContext(filepath,groupID,processedTokens,dsmProj,targetWords$Var1[1:20],minMatches=25,window_length=15,sim_count=1000)
+          print("out of quant cont - got metrics")
           cvMetrics <- rbind(cvMetrics, metrics)
-          
+          print("rbind complete")
           remove(processedTokens)
+          print("remove process")
           remove(dsmProj)
+          print("remove dsm")
           remove(targetWords)
+          print("remove Target")
         }
       }
     }
     write.csv(cvMetrics, "./data_dsicap/ref/signal_semContext.csv")
+    print("Finished Sem Density - Context Vectors")
   }
   
   #Quantify network, ACOM
-  if (semACOMAndNetwork == T){
+  if (semACOM == T){
+    
+    
+    
     acom_All <- c()
-    network_All<- c()
-    for (group in groups[1]) {
+    # network_All<- c()
+    for (group in groups) {
       print(group)
       for (type in c('train','test')){
         dataFiles <- list.files(paste0('./data_dsicap/',group,"/RData"))
@@ -276,18 +298,63 @@ runPrototype <- function(filepath, resample = F,
           targetWord_fileName <- paste0("targetWords","_",type,gsub("[^0-9]","",id),".csv")
           targetWords <- read.csv(paste0('./data_dsicap/',group,'/RData/',targetWord_fileName), stringsAsFactors = F)
           
-          acom_result <- tot_frequency_DSM(wordCo, dsmProj, targetWords, groupID)
+          acom_result <- tot_frequency_DSM(wordCo, dsmProj, targetWords$Var1[1:20], groupID)
           acom_All <- rbind(acom_All, acom_result)
-          network_result <- network_signal(dsmProj, groupID)
-          network_All <- rbind(network_All, network_result)
+          # network_result <- network_signal(dsmProj, groupID)
+          # network_All <- rbind(network_All, network_result)
           
-          remove(processedTokens)
+          # remove(processedTokens)
           remove(dsmProj)
           remove(targetWords)
         }
       }
     }
-    write.csv(cvMetrics, "./data_dsicap/ref/signal_semACOMAndNetwork.csv")
+    
+    write.csv(acom_All, "./data_dsicap/ref/signal_semACOM.csv")
+    # write.csv(network_All, "./data_dsicap/ref/signal_network.csv")
+    print("THE GRAND CONCLUSION")
+  }
+
+  if (network == T){
+    
+    checkandloadlibrary('igraph')
+    
+    network_All<- c()
+    for (group in groups) {
+      print(group)
+      for (type in c('train','test')){
+        dataFiles <- list.files(paste0('./data_dsicap/',group,"/RData"))
+        IDs <- unique(str_extract(dataFiles,paste0(type,"[0-9]+")))
+        IDs <- IDs[!is.na(IDs)]
+        for (id in IDs) {
+          groupID <- paste0(group,"_",id)
+          print(groupID)
+          
+          #Load DSM
+          dsmName<-paste0('dsmProj_', id,'.RData')
+          load(paste0('./data_dsicap/',group,'/RData/',dsmName))
+          
+          # Load WordCo
+          wordCoName<-paste0('wordCo_',id,'.RData')
+          load(paste0('./data_dsicap/',group,'/RData/',wordCoName))
+          
+          #Load targetWords
+          targetWord_fileName <- paste0("targetWords","_",type,gsub("[^0-9]","",id),".csv")
+          targetWords <- read.csv(paste0('./data_dsicap/',group,'/RData/',targetWord_fileName), stringsAsFactors = F)
+          
+          # acom_result <- tot_frequency_DSM(wordCo, dsmProj, targetWords[1:20], groupID)
+          # acom_All <- rbind(acom_All, acom_result)
+          network_result <- network_signal(dsmProj, groupID)
+          network_All <- rbind(network_All, network_result)
+          
+          # remove(processedTokens)
+          remove(dsmProj)
+          remove(targetWords)
+        }
+      }
+    }
+    write.csv(network_All, "./data_dsicap/ref/signal_network.csv")
+    # print("THE GRAND CONCLUSION")
   }
 
 }

@@ -67,7 +67,9 @@ createDSM<-function(filepath,datafile_name,wordCo){
 
 #Quantify context vectors function
 quantifyContext<-function(filepath,datafile_name,target_corpus,dsmProj,most_freq_words,minMatches=25,window_length=15,sim_count=1000){
-  dsmProj <- t(data.frame(dsmProj))
+  print("Start of quantify Context")
+  dsmProj <- data.frame(dsmProj)
+  dsmProj <- t(dsmProj)
 #for each document in corpus
   for (i in 1:length(target_corpus)){
     
@@ -115,20 +117,16 @@ quantifyContext<-function(filepath,datafile_name,target_corpus,dsmProj,most_freq
   
   #Loop through each word in words_to_analyze
   words_to_analyze=length(most_freq_words)
-  cvCosineSim<-list(rep(0, words_to_analyze))
+  cvCosineSim <- data.frame(0)
+  #cvCosineSim<-list(rep(0, words_to_analyze))
     
   for (word_id in 1:words_to_analyze){
     
     #Extract words
-    print(word_id)
-    print(class(word_id))
     
     search_word<-most_freq_words[word_id]
     
     print(search_word)
-    print(class(search_word))
-    print(length(context_vector_df))
-    print(colnames(context_vector_df))
     
     context_vector_subset<-context_vector_df$context_vector[context_vector_df$target==search_word]
     if(length(context_vector_subset>0)){
@@ -162,20 +160,26 @@ quantifyContext<-function(filepath,datafile_name,target_corpus,dsmProj,most_freq
         #Add cosine sim for random pairs to cosine sim
         cosineSim=cosineSim+cosine(as.vector(cvX),as.vector(cvY))[[1,1]]
       }
-      cvCosineSim[search_word]=cosineSim/sim_count
+      cvCosineSim[1,word_id]=cosineSim/sim_count
       
     }else{
     #Add Na if word not found in context vectors
-    cvCosineSim[search_word]=NA
+    cvCosineSim[1,word_id]=NA
     }
   }
-  groupCosineSim<-data.frame(t(cvCosineSim))
-  groupCosineSim$V1<-datafile_name
+  print("end of quant cont")
   
-
-  cvColumns<-paste('word_',1:length(most_freq_words),sep="")
-  colnames(groupCosineSim)<-c('groupName',cvColumns)
-
+  print(head(cvCosineSim))
+  groupCosineSim<-data.frame(t(cvCosineSim))
+  
+  print(head(groupCosineSim))
+  groupCosineSim$groupName<-datafile_name
+  
+  
+  #cvColumns<-paste('word_',1:length(most_freq_words),sep="")
+  #print(cvColumns)
+  #colnames(groupCosineSim)<-c('groupName',cvColumns)
+  print("rename complete")
   #Return dataframe with cvCosineSim
   return(groupCosineSim)
 }
