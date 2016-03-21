@@ -8,6 +8,6 @@ lapply(num_groups, function(i) {
 
 lapply(num_groups, function(i) {
   file_text <- readLines("chetan_mishra_sandbox/run_parSemCo.sh")
-  file_text[19] <- str_replace(file_text[19], 'parSemCo.R', paste0('parSemCo', i, '.R'))
-  writeLines(file_text, paste0("prototype/par_sem_co/run_parSemCo", i, '.R'))
+  file_text[19] <- str_replace(file_text[19], 'script_parSemCo.R', paste0('par_sem_co/script_parSemCo', i, '.R'))
+  writeLines(file_text, paste0("prototype/par_sem_co/run_parSemCo", i, '.sh'))
 })
