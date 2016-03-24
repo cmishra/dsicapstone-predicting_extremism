@@ -1,5 +1,6 @@
 #!/bin/bash
+file='test'
 for i in `seq 1 10`;
 do
-    echo $i
+    echo $file$i
 done
