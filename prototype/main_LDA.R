@@ -1,6 +1,6 @@
 
 runPrototype <- function(filepath, resample = F,
-                       tokenize = T,
+                       tokenize = F,
                        sentiment= F,
                        getTopWords = F,
                        judgements = F,
@@ -14,8 +14,8 @@ runPrototype <- function(filepath, resample = F,
   
   # All Required Packages
   # Need to figure out 'wordspace'
-  requiredLibs <- c('tm','RWeka','SnowballC','parallel','data.table',
-                    'compiler','Rcpp','RcppArmadillo','stringr','plyr', 'openNLP', 'lsa', 'topicmodels')
+  requiredLibs <- c('tm','SnowballC','parallel','data.table',
+                    'compiler','Rcpp','RcppArmadillo','stringr','plyr', 'lsa', 'topicmodels')
   
   
   
@@ -40,7 +40,8 @@ runPrototype <- function(filepath, resample = F,
   function.sources = list.files('./prototype/method', pattern="method_")
   function.sources = sapply(function.sources, function(x) paste0('./prototype/method/', x))
   sapply(function.sources,source,.GlobalEnv)
-  
+  #install.packages("Rcpp")
+  #library(Rcpp)
   # Get List of Groups in Folder Structure
   files <- list.files('./data_dsicap')
   groups  <- files[files != 'ref']
@@ -363,35 +364,40 @@ runPrototype <- function(filepath, resample = F,
   if(LDA == T){
     traincorpus <- VCorpus(VectorSource(NULL))
     testcorpus <- VCorpus(VectorSource(NULL))
-    rowids <- NULL
-    
+    groupids <- NULL
+    docids <- NULL
+    #install.packages("stringr")
+    #library(stringr)
     for (group in groups[1]) {
       print(group)
       for (type in c('train','test')){
         dataFiles <- list.files(paste0('./data_dsicap/',group,"/RData"))
         IDs <- unique(str_extract(dataFiles,paste0(type,"[0-9]+")))
         IDs <- IDs[!is.na(IDs)]
-        for (id in c(1,2)) {
+        for (id in IDs[1:2]) {
           print(id)
           # Load in Preprocessed Strings to Process for Sentiment
           # load('./WBC/RData/processedStrings.RData')
           #Load DSM
-          tokName<-paste0('processedTokens_', type, id,'.RData')
+          tokName<-paste0('processedTokens_', id,'.RData')
           load(paste0('./data_dsicap/',group,'/RData/',tokName))
           #load(paste0('./data_dsicap/',group,'/RData/',binnedTokens))
           #processedTokens <- VCorpus(VectorSource(processedTokens))
           #metrics <- calc_Sentiment(processedTokens, paste0(group,"_",id))
-          if(type=="train")
-          {
-            traincorpus <- c(traincorpus,processedTokens)
-          }
           
-          if(type=="test")
-          {
-            testcorpus <- c(testcorpus,processedTokens)
-          }
-          
-          remove(processedTokens)
+          groupids <- c(groupids, rep(paste0(group,'_', id),length(processedTokens)))
+                        
+                        if(type=="train")
+                        {
+                          traincorpus <- c(traincorpus,processedTokens)
+                        }
+                        
+                        if(type=="test")
+                        {
+                          testcorpus <- c(testcorpus,processedTokens)
+                        }
+                        
+                        remove(processedTokens)
         }
         
         
@@ -406,15 +412,17 @@ runPrototype <- function(filepath, resample = F,
       testids <- testids[!is.na(testids)]
       testids <- testids[1:20] # TO BE DELETED
       
-      rowids <- c(rowids,
+      docids <- c(docids,
                   lapply(trainids, function(x) { paste0(group,"_",x)}), 
                   lapply(testids, function(x) { paste0(group,"_",x)}))
       
     }
     
-    lda_data <- run_LDA(traincorpus, k=100, rowids, sparsity=.9, testcorpus)
+    lda_data <- run_LDA(traincorpus, k=100, groupids, docids, sparsity=.9, testcorpus)
     write.csv(lda_data, "./data_dsicap/ref/signal_LDA.csv")
     
   }
-
+  
 }
+
+
