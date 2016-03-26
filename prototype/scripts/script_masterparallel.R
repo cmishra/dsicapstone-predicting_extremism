@@ -1,5 +1,7 @@
 
-runProtoParSub <- function(filepath, resample = F,
+
+
+runParallelPrototype <- function(filepath, resample = F,
                        tokenize = F,
                        sentiment= F,
                        getTopWords = F,
@@ -29,13 +31,13 @@ runProtoParSub <- function(filepath, resample = F,
     checkandloadlibrary(lib)
   }
   
-  install.packages('prototype/wordspace_0.1-14.tar.gz', repos = NULL, type="source")
+  install.packages('prototype/method/wordspace_0.1-14.tar.gz', repos = NULL, type="source")
   print(paste0("loading ","wordspace","..."))
   library(wordspace)
   # Load Functions from Script
   
-  function.sources = list.files('./prototype', pattern="method_")
-  function.sources = sapply(function.sources, function(x) paste0('./prototype/', x))
+  function.sources = list.files('./prototype/method', pattern="method_")
+  function.sources = sapply(function.sources, function(x) paste0('./prototype/method/', x))
   sapply(function.sources,source,.GlobalEnv)
   
   # Get List of Groups in Folder Structure
