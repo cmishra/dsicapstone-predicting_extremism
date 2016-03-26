@@ -1,5 +1,5 @@
 
 # Set up For RiRi
-source('./prototype/script_master.R')
+source('./prototype/parSemCo.R')
 i = 294
-parSemCo('.',i) 
+parSemCo('.',i)

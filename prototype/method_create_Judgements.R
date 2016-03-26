@@ -74,7 +74,7 @@ create_Judgements <- function(corpus, groupName){
         part <- unlist(y[j,"features"])
         if (adj_flag == 0) {
           # print(adj_flag)
-          if (part == 'JJ') {
+          if (part %in% c("JJ", "JJR", "JJS", "RB","RBR", "RBS")) {
             adj_flag <- 1
             # print(adj_flag)
           }
@@ -85,7 +85,7 @@ create_Judgements <- function(corpus, groupName){
         # Check for Noun
         if (noun_flag == 0) {
           # print(adj_flag)
-          if (part == 'NN') {
+          if (part %in% c('NN','NNP','NNS','NNPS')) {
             noun_flag <- 1
             # print(adj_flag)
           }
@@ -114,9 +114,7 @@ create_Judgements <- function(corpus, groupName){
     # print(head(master))
     bigMaster <- rbind(bigMaster, master)
   }
-#   write.csv(bigMaster[,c('doc[sentence.annotations]','judgement','docName')],
-#             "Judgements_Output_Piper.csv")
-  
+
   
   #avgJudgements <- data.frame(docName = c(), rowNumber = c(), judgementsNum = c(), percentJudgements = c())
   avgJ <- c()
@@ -124,32 +122,16 @@ create_Judgements <- function(corpus, groupName){
   for (i in unique(bigMaster$docName)){
     rowTot <- nrow(bigMaster[which(bigMaster$docName == i),])
     judges <- nrow(bigMaster[which(bigMaster$docName == i & bigMaster$judgement == 1),])
-    #   print(paste(i,
-    #     rowTot,
-    #     round(judges/rowTot,4),"%"
-    #   ))
+
     percentJ <- round(judges/rowTot,4)
-    # print(percentJ)
     avgJ <- append(avgJ, percentJ)
     numJ <- append(numJ, judges)
-    #   # vect <- c(i,rowTot,judges,round(judges/rowTot,4))
-    #   if (i == unique(bigMaster$docName)[1]){
-    #     Y  <- data.frame(docName = i, rowTot = rowTot, judgements = judges, percent = round(judges/rowTot,4))
-    #   }
-    #   else { 
-    #     vect <- data.frame(i,rowTot,judges,round(judges/rowTot,4))
-    #     rbind(Y,vect) 
-    #   }
+
   }
-  #View(avgJ)
-  #mean(avgJ)
-  #View(Y)
+
   metrics <- data.frame("group" = groupName, 
                         "avgPercJ" = mean(avgJ),
                         "avgNumJ" = mean(numJ))
   
-  # write.csv(bigMaster[,c(1,4:8)], "Judgements_Output.csv")
-  #View(bigMaster[,c('doc[sentence.annotations]','judgement','docName')])
-  #names(bigMaster)
-  # return(judgements)
+
 }

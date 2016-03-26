@@ -1,5 +1,5 @@
 
 # Set up For RiRi
 source('./prototype/script_master.R')
-runPrototype('.', resample = F,
-             tokenize = F, sentiment= F, getTopWords = F, judgements = F, BOW = F, semanticContext = F) 
+runPrototype('.', resample = T, tokenize = T, sentiment= T, getTopWords = T,
+             judgements = T,BOW = F,createCo = T,createDSM = T,semContext = T, semACOM = T, network = F) 
