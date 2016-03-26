@@ -12,4 +12,3 @@ do
 	echo sbatch $path$file$i$ext
 	# echo "$s"
 
-done
