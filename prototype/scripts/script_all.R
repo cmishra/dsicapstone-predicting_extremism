@@ -11,7 +11,7 @@ i = 1
 #parSemCo('.',i)
 
 source("prototype/scripts/script_masterparallel.R")
-runParallelPrototype(".", resample = T,
+runParallelPrototype(".", i, resample = T,
                      tokenize = T,
                      sentiment= T,
                      getTopWords = T,
