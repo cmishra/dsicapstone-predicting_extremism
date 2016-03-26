@@ -95,6 +95,7 @@ quantifyContext<-function(filepath,datafile_name,target_corpus,dsmProj,most_freq
       #Identify target word
       id_word=text_string[j]
       
+      
       #Get context vector ids and extract target word
       context_names=text_string[lower_bound:upper_bound]
       # context_names=context_names[-(j-lower_bound)]
@@ -125,7 +126,9 @@ quantifyContext<-function(filepath,datafile_name,target_corpus,dsmProj,most_freq
     #Extract words
     
     search_word<-most_freq_words[word_id]
-    
+    if(search_word == 'nt'){
+      search_word = "not"
+    }
     print(search_word)
     
     context_vector_subset<-context_vector_df$context_vector[context_vector_df$target==search_word]
