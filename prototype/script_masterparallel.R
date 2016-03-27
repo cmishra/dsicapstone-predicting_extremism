@@ -1,7 +1,7 @@
 
 
 
-runParallelPrototype <- function(filepath, i, resample = F,
+runParallelPrototype <- function(filepath, binNum, resample = F,
                        tokenize = F,
                        sentiment= F,
                        getTopWords = F,
@@ -16,7 +16,8 @@ runParallelPrototype <- function(filepath, i, resample = F,
   # All Required Packages
   # Need to figure out 'wordspace'
   requiredLibs <- c('tm','RWeka','SnowballC','parallel','data.table',
-                    'compiler','Rcpp','RcppArmadillo','stringr','plyr', 'openNLP', 'lsa')
+                    'compiler','Rcpp','RcppArmadillo','stringr','plyr', 'openNLP', 'lsa',
+                    'topicmodels')
   
   checkandloadlibrary <- function(package){
     if(!package %in% .packages(all.available = TRUE)){
@@ -63,7 +64,7 @@ runParallelPrototype <- function(filepath, i, resample = F,
   id = NULL
   group = NULL
   
-  groupID <- subgroupList[i]
+  groupID <- subgroupList[binNum]
   bin <- str_split(groupID,"_")
   id <- bin[[1]][2]
   group <- bin[[1]][1]
@@ -89,7 +90,8 @@ runParallelPrototype <- function(filepath, i, resample = F,
     binnedCorpus <- createBinnedCorpus(paste0('./data_dsicap/',group), unlist(indices[index,]))
     preprocessDocuments(binnedCorpus,filepath = paste0('./data_dsicap/',group),datafile_name = paste0(type,index))
     
-    tokenize.time = (proc.time()-start)
+    
+    tokenize.TIMED = (proc.time()-start)
   }
  
   # Get the 20 Target Words for BOW Baseline Analysis
@@ -104,7 +106,7 @@ runParallelPrototype <- function(filepath, i, resample = F,
           
     remove(binnedCorpus)
     
-    getTopWords.time = (proc.time()-start)
+    getTopWords.TIMED = (proc.time()-start)
   }
   
 
@@ -123,7 +125,7 @@ runParallelPrototype <- function(filepath, i, resample = F,
     fileName = paste0("./data_dsicap/ref/signal_",sigName,"_",groupID,".csv")
     write.csv(metrics, fileName)
     
-    sentiment.time = (proc.time()-start)
+    sentiment.TIMED = (proc.time()-start)
   }
   
   
@@ -141,7 +143,7 @@ runParallelPrototype <- function(filepath, i, resample = F,
     fileName = paste0("./data_dsicap/ref/signal_",sigName,"_",groupID,".csv")
     write.csv(metrics, fileName)
     
-    judgements.time = (proc.time()-start)
+    judgements.TIMED = (proc.time()-start)
   }
   
   if(createCo == T){
@@ -152,10 +154,10 @@ runParallelPrototype <- function(filepath, i, resample = F,
     load(paste0('./data_dsicap/',group,'/RData/',tokName))
     
     filepath <- paste0('./data_dsicap/',group,'/RData/')
-    output_cooccurrences(processedTokens, filepath, groupID, window_length = 15)
+    output_cooccurrences(processedTokens, filepath, id, window_length = 15)
     remove(processedTokens)
     
-    createCo.time = (proc.time()-start) 
+    createCo.TIMED = (proc.time()-start) 
   }
   
   # Create RData files containing DSM projections of Each Random Group
@@ -167,7 +169,7 @@ runParallelPrototype <- function(filepath, i, resample = F,
     load(paste0('./data_dsicap/',group,'/RData/',wordCoName))
     
     filepath<-paste0('./data_dsicap/',group,'/RData/')
-    createDSM(filepath,groupID,wordCo)
+    createDSM(filepath,id,wordCo)
 
     remove(wordCo)
     createDSM.time = (proc.time()-start)
@@ -200,7 +202,7 @@ runParallelPrototype <- function(filepath, i, resample = F,
     fileName = paste0("./data_dsicap/ref/signal_",sigName,"_",groupID,".csv")
     write.csv(metrics, fileName)
     
-    semContent.time = (proc.time()-start)
+    semContent.TIMED = (proc.time()-start)
   }
   
   #Quantify network, ACOM
@@ -227,8 +229,19 @@ runParallelPrototype <- function(filepath, i, resample = F,
     fileName = paste0("./data_dsicap/ref/signal_",sigName,"_",groupID,".csv")
     write.csv(metrics, fileName)
     
-    semACOM.time = proc.time() - start
+    semACOM.TIMED = proc.time() - start
   }
+
+  vars <- ls()
+  vars = vars[str_detect(vars,"TIMED")] 
+  varValues = c()
+  for (i in vars){
+    varValues <- c(varValues,get(i)[[3]])
+  }
+  varHrs <- (varValues*328)/3600
+  varsDF <- data.frame(vars,varValues, varHrs)
+  write.csv(varsDF,'./data_dsicap/ref/timeit.csv')
+
 
   if (network == T){
     start = proc.time()
@@ -248,7 +261,7 @@ runParallelPrototype <- function(filepath, i, resample = F,
     targetWords <- read.csv(paste0('./data_dsicap/',group,'/RData/',targetWord_fileName), stringsAsFactors = F)
     
     
-    metrics <- network_signal(dsmProj, groupID)
+    metrics <- network_signal(dsmProj, targetWords, groupID)
           
     # remove(processedTokens)
     remove(dsmProj)
@@ -258,7 +271,18 @@ runParallelPrototype <- function(filepath, i, resample = F,
     fileName = paste0("./data_dsicap/ref/signal_",sigName,"_",groupID,".csv")
     write.csv(metrics, fileName)
 
-    network.time = (proc.time()-start)
+    network.TIMED = (proc.time()-start)
   }
+
+  vars <- ls()
+  vars = vars[str_detect(vars,"TIMED")] 
+  varValues = c()
+  for (i in vars){
+    varValues <- c(varValues,get(i)[[3]])
+  }
+  varHrs <- (varValues*328)/3600
+  varsDF <- data.frame(vars,varValues, varHrs)
+  write.csv(varsDF,'./data_dsicap/ref/timeit.csv')
+
 }
 
