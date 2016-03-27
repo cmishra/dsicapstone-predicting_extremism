@@ -1,5 +1,6 @@
 
-# Set up For RiRi
-source('./prototype/script_master.R')
-runPrototype('.', resample = T, tokenize = T, sentiment= T, getTopWords = T,
-             judgements = T,BOW = F,createCo = T,createDSM = T,semContext = T, semACOM = T, network = F) 
+# Set up For LDA LOCAL
+source('./prototype/main_LDA.R')
+runPrototype('.', resample = F, tokenize = F, sentiment= F, getTopWords = F,
+             judgements = F,BOW = F,createCo = F,createDSM = F,semContext = F, semACOM = F, 
+             network = F, LDA = T) 
