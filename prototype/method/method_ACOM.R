@@ -21,23 +21,23 @@ tot_frequency_DSM <- function(wordCo, dsmProj, words, group_id, top_portion=0.5)
             acom=mean_similarity)
 }
 
-# test_code
-test_words <- c('littl', 'mani', 'now',
-               'long',
-               'good',
-               'old',
-               'just',
-               'much',
-               'young',
-               'also',
-               'awai',
-               'last',
-               'even',
-               'poor',
-               'still',
-               'alwai',
-               'back',
-               'beauti',
-               'first',
-               'great'
-)
+# # test_code
+# test_words <- c('littl', 'mani', 'now',
+#                'long',
+#                'good',
+#                'old',
+#                'just',
+#                'much',
+#                'young',
+#                'also',
+#                'awai',
+#                'last',
+#                'even',
+#                'poor',
+#                'still',
+#                'alwai',
+#                'back',
+#                'beauti',
+#                'first',
+#                'great'
+# )
