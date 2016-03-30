@@ -38,7 +38,7 @@
 # }
   
 #Create DSM function 
-createDSM<-function(filepath,datafile_name,wordCo){
+createDSM<-function(filepath,datafile_name,wordCo, local_run=F){
   #Subset vectors only greater than min matches
   minMatches = 10
   countWords <- wordCo[,.(length(context)), 
@@ -47,6 +47,8 @@ createDSM<-function(filepath,datafile_name,wordCo){
                                          context %in% countWords]
   wordCo[,c("target", "context"):=
                      list(as.factor(target), as.factor(context))]
+  
+  if (local_run) wordCo <- wordCo[freq > 10]
   
   #run Distributional semantic model(DSM)
   rawDSM <- dsm(target=wordCo$target,
