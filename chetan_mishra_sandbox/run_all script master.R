@@ -35,3 +35,6 @@ createDSM(tmp_data_folder, "", wordCo, local_run=T)
 load(paste0(tmp_data_folder, '/dsmProj_.RData'))
 rm(wordCo, processedTokens)
 metrics <- network_signal(dsmProj, topwords, "123")
+
+# ACOM
+tot_frequency_DSM(wordCo, dsmProj, topwords, "")

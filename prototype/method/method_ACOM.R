@@ -1,6 +1,7 @@
 
 
 tot_frequency_DSM <- function(wordCo, dsmProj, words, group_id, top_portion=0.5) {
+  require(lsa)
   wordCo <- wordCo[
     target %in% words & context %in% rownames(dsmProj)
     ][
@@ -14,7 +15,8 @@ tot_frequency_DSM <- function(wordCo, dsmProj, words, group_id, top_portion=0.5)
     vectors <- wordCo[target == word,as.character(context)]
     vectors <- dsmProj[vectors,]
     vectors <- lapply(split(vectors, seq(nrow(vectors))), unlist)
-    estimate_cos_simil(vectors)
+    vectors <- do.call(cbind, vectors)
+    mean(cosine(vectors))
   })), na.rm=T)
   
   data.frame(group=group_id,
